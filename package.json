@@ -4,22 +4,29 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build",
+    "build": "prisma generate && nuxt build",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck"
+    "postinstall": "prisma generate && nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@fontsource/barlow": "^5.2.0",
     "@fontsource/barlow-condensed": "^5.2.0",
     "@nuxtjs/i18n": "^10.6.0",
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
     "lucide-vue-next": "^1.0.0",
     "nuxt": "4.5.2",
     "vue": "^3.5.0",
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.19.1",
+    "prisma": "^6.19.3",
     "typescript": "^5.6.0",
     "vue-tsc": "^3.0.0"
   }

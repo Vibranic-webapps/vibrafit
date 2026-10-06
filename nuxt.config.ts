@@ -41,9 +41,8 @@ export default defineNuxtConfig({
     },
   },
 
-  runtimeConfig: {
-    databaseUrl: process.env.DATABASE_URL,
-  },
+  // No databaseUrl in runtimeConfig: Prisma reads DATABASE_URL from the env
+  // itself, and putting it here would bake the password into the build output.
 
   app: {
     head: {
