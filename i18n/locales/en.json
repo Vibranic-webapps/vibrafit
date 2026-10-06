@@ -2,5 +2,55 @@
   "app": {
     "name": "Vibrafit",
     "tagline": "Train at home. Stay consistent. Get stronger."
+  },
+  "tabs": {
+    "label": "Main navigation",
+    "today": "Today",
+    "history": "History",
+    "equipment": "Equipment",
+    "you": "You"
+  },
+  "feeling": {
+    "question": "How did it feel?",
+    "easy": "Easy",
+    "good": "Good",
+    "hard": "Hard"
+  },
+  "ui": {
+    "loading": "Loading",
+    "theme": {
+      "label": "Appearance",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "stepper": {
+      "decrease": "Decrease {unit}",
+      "increase": "Increase {unit}"
+    },
+    "set": {
+      "pending": "Pending",
+      "current": "Current set",
+      "logged": "Logged",
+      "skipped": "Skipped"
+    },
+    "goalRing": {
+      "label": "Weekly goal: {done} of {target} workouts done"
+    },
+    "weekStrip": {
+      "today": "Today",
+      "done": "done",
+      "planned": "planned",
+      "missed": "missed",
+      "rest": "rest day"
+    }
+  },
+  "workout": {
+    "start": "Start",
+    "logSet": "Log set {n}",
+    "skipExercise": "Pain? Skip this exercise"
+  },
+  "design": {
+    "backHome": "Back to Vibrafit"
   }
 }
