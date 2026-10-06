@@ -130,6 +130,10 @@
      --------------------------------------------------------------------- */
   --vf-tap-min: 48px;
 
+  /* ---- Layout widths (phone-first: content never stretches on desktop) ---- */
+  --vf-width-form: 400px; /* sign-in screens, single forms */
+  --vf-width-page: 480px; /* signed-in single-column pages (You, Today...) */
+
   /* ---------------------------------------------------------------------
      MOTION — short and punchy. prefers-reduced-motion is handled below.
      --------------------------------------------------------------------- */

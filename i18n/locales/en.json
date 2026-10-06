@@ -52,5 +52,92 @@
   },
   "design": {
     "backHome": "Back to Vibrafit"
+  },
+  "auth": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "currentPassword": "Current password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "passwordRules": {
+      "length": "More than 8 characters",
+      "lower": "One lowercase letter",
+      "upper": "One uppercase letter",
+      "number": "One number"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Welcome back.",
+      "remember": "Keep me signed in",
+      "submit": "Sign in",
+      "forgotLink": "Forgot your password?",
+      "signupPrompt": "No account yet?",
+      "signupLink": "Create one",
+      "deletedNotice": "Your account has been deleted."
+    },
+    "signup": {
+      "title": "Create account",
+      "subtitle": "Start training with Vibrafit.",
+      "nameOptional": "Name (optional)",
+      "safetyNote": "Vibrafit gives training suggestions, not medical advice.",
+      "submit": "Create account",
+      "loginPrompt": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "submit": "Send reset link",
+      "sentTitle": "Check your email",
+      "sentBody": "If an account exists for that address, we've sent a link to reset your password.",
+      "backToLogin": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Choose a new password for your account.",
+      "submit": "Save password",
+      "missingTitle": "This link doesn't work",
+      "missingBody": "This reset link is missing, invalid, or has already been used. Request a new one to continue.",
+      "requestNewLink": "Request a new link",
+      "backToLogin": "Back to sign in"
+    },
+    "you": {
+      "title": "You",
+      "signedInAs": "Signed in as {who}.",
+      "nameLabel": "Name",
+      "nameHint": "Shown when Vibrafit greets you.",
+      "nameSave": "Save",
+      "nameSaved": "Saved.",
+      "appearance": "Appearance",
+      "changePasswordTitle": "Change password",
+      "changePasswordSubmit": "Change password",
+      "changePasswordSuccess": "Password changed. Other devices were signed out.",
+      "signOut": "Sign out",
+      "dangerZoneTitle": "Danger zone",
+      "dangerZoneBody": "Deleting your account permanently removes your profile, equipment, programs and workout history. This can't be undone.",
+      "deleteAccount": "Delete account",
+      "deleteConfirmTitle": "Permanently delete your account?",
+      "deleteConfirmBody": "Everything you've logged in Vibrafit — equipment, programs, workouts and sets — is deleted permanently. Enter your password to confirm.",
+      "deleteConfirmSubmit": "Permanently delete account",
+      "deleteCancel": "Cancel"
+    },
+    "errors": {
+      "invalid_input": "Something's missing from that form. Check the fields and try again.",
+      "invalid_email": "Enter a valid email address.",
+      "invalid_credentials": "That email and password don't match.",
+      "weak_password": "That password doesn't meet the requirements below.",
+      "password_too_long": "That password is too long.",
+      "name_too_long": "That name is too long.",
+      "email_taken": "An account with that email already exists.",
+      "wrong_password": "That password is incorrect.",
+      "invalid_reset_token": "This reset link is invalid or has expired.",
+      "not_authenticated": "You've been signed out. Sign in again to continue.",
+      "rate_limited": "Too many attempts. Try again in {minutes} min.",
+      "generic": "Something went wrong. Check your connection and try again."
+    }
   }
 }
