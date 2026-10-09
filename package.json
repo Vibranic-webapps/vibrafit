@@ -8,6 +8,7 @@
     "preview": "nuxt preview",
     "postinstall": "prisma generate && nuxt prepare",
     "typecheck": "nuxt typecheck",
+    "test": "node --test \"tests/**/*.test.ts\"",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio"
