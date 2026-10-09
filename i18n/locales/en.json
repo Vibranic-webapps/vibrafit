@@ -137,6 +137,7 @@
       "invalid_reset_token": "This reset link is invalid or has expired.",
       "not_authenticated": "You've been signed out. Sign in again to continue.",
       "rate_limited": "Too many attempts. Try again in {minutes} min.",
+      "invalid_origin": "This request was blocked for your safety. Reload the page and try again.",
       "generic": "Something went wrong. Check your connection and try again."
     }
   }

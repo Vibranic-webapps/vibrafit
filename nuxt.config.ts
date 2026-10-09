@@ -41,6 +41,8 @@ export default defineNuxtConfig({
     },
   },
 
+  // Security headers: server/middleware/security-headers.ts.
+
   // No databaseUrl in runtimeConfig: Prisma reads DATABASE_URL from the env
   // itself, and putting it here would bake the password into the build output.
 

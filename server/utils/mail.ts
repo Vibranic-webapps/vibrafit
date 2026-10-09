@@ -21,6 +21,12 @@ export async function sendMail({ to, subject, html, text }: SendArgs): Promise<v
   const from = process.env.MAIL_FROM ?? 'Vibrafit <noreply@kilianfrederix.net>'
 
   if (!apiKey) {
+    // Production: a reset link in the logs is a working account-takeover
+    // token (and Vercel logs can reach log drains). Say only that it failed.
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[mail] RESEND_API_KEY missing - mail NOT sent')
+      return
+    }
     console.warn('[mail] RESEND_API_KEY not set - logging instead of sending')
     console.warn(`[mail] to=${to} subject=${subject}\n${text}`)
     return

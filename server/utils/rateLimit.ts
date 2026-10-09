@@ -29,12 +29,13 @@ const MINUTE = 60_000
 const HOUR = 60 * MINUTE
 
 export const LIMITS = {
-  // Failed logins for one email from one IP. Only FAILURES count, and a
-  // success clears it, so a normal user who mistypes once is never bothered.
+  // Login attempts for one email from one IP. Every attempt is counted up
+  // front and a success clears it, so effectively only FAILURES add up: a
+  // normal user who mistypes once is never bothered.
   loginFailEmailIp: { bucket: 'login-fail', max: 5, windowMs: 15 * MINUTE },
-  // Failed logins from one IP across ALL emails: stops one machine spraying a
-  // common password over many accounts. Never cleared by a success (one valid
-  // account must not reset the attacker's budget).
+  // Login attempts from one IP across ALL emails: stops one machine spraying a
+  // common password over many accounts. A success refunds only its own hit,
+  // never clears it (one valid account must not reset the attacker's budget).
   loginFailIp: { bucket: 'login-fail-ip', max: 30, windowMs: 15 * MINUTE },
   // Signup attempts per IP (every attempt that reaches the database counts,
   // including "email_taken" ones, which limits account enumeration).
@@ -121,20 +122,24 @@ export async function tryConsumeRateLimit(limit: Limit, parts: string[]): Promis
   return count <= limit.max
 }
 
-/** 429 if this key already has `max` hits in the current window. Doesn't count.
- *  Checked BEFORE the password is verified, so a locked-out client gets 429
- *  even with the right password: otherwise the 429-vs-200 difference would
- *  keep working as a password oracle during the lockout. */
-export async function assertNotRateLimited(event: H3Event, limit: Limit, parts: string[]): Promise<void> {
-  const row = await prisma.rateLimit.findUnique({ where: { key: keyFor(limit, parts) } })
-  if (!row) return
-  const windowOpen = row.windowStart.getTime() + limit.windowMs > Date.now()
-  if (windowOpen && row.count >= limit.max) tooMany(event, row.windowStart, limit)
-}
+/*
+ * Password checks (login, change password, delete account) use consume FIRST,
+ * then verify, then clear/refund on success. Never "check, verify, then record
+ * the failure": bcrypt takes ~250 ms, so a burst of parallel requests would all
+ * pass the check before the first failure is written, and the limit would be
+ * "whatever fits in one burst" instead of `max`. Consuming up front also means
+ * a locked-out client gets 429 even with the right password, so the
+ * 429-vs-200 difference can't work as a password oracle during the lockout.
+ */
 
-/** Record one failure (for limits that only count failures, e.g. logins). */
-export async function recordRateLimitHit(limit: Limit, parts: string[]): Promise<void> {
-  await hit(limit, parts)
+/** Give back one hit, e.g. a successful login on a counter that must not be
+ *  cleared by a success (one valid account must not reset an attacker's
+ *  budget, but a household logging in normally must not fill it either). */
+export async function refundRateLimit(limit: Limit, parts: string[]): Promise<void> {
+  await prisma.rateLimit.updateMany({
+    where: { key: keyFor(limit, parts), count: { gt: 0 } },
+    data: { count: { decrement: 1 } },
+  })
 }
 
 /** Forget a key, e.g. after a successful login or password reset. */

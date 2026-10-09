@@ -20,6 +20,7 @@ export type ApiErrorCode =
   | 'wrong_password' // signed in, but the current password typed is wrong
   | 'invalid_reset_token'
   | 'rate_limited' // data.retryAfter = seconds; also a Retry-After header
+  | 'invalid_origin' // a write to /api/* that didn't come from this app's own pages
 
 export function apiError(
   statusCode: number,

@@ -3,7 +3,7 @@ import { verifyPassword, verifyAgainstDummy, createSession, toAuthUser } from '~
 import { apiError, readJsonObject } from '~~/server/utils/errors'
 import { EMAIL_MAX, normalizeEmail, PASSWORD_MAX_BYTES } from '~~/server/utils/validate'
 import {
-  assertNotRateLimited, clearRateLimit, clientIp, LIMITS, recordRateLimitHit,
+  clearRateLimit, clientIp, consumeRateLimit, LIMITS, refundRateLimit,
 } from '~~/server/utils/rateLimit'
 
 export default defineEventHandler(async (event) => {
@@ -15,10 +15,11 @@ export default defineEventHandler(async (event) => {
   const ip = clientIp(event)
   const emailIp = [normalizedEmail, ip]
 
-  // Locked out? Checked before the password, so the right password during a
-  // lockout gets the same 429 as a wrong one (no oracle).
-  await assertNotRateLimited(event, LIMITS.loginFailEmailIp, emailIp)
-  await assertNotRateLimited(event, LIMITS.loginFailIp, [ip])
+  // Counted BEFORE the password is checked (see rateLimit.ts): parallel
+  // bursts can't slip past, and the right password during a lockout gets the
+  // same 429 as a wrong one (no oracle).
+  await consumeRateLimit(event, LIMITS.loginFailEmailIp, emailIp)
+  await consumeRateLimit(event, LIMITS.loginFailIp, [ip])
 
   // Oversized input can't match any stored account (signup refuses it), so
   // skip the lookup, but still count it as a failure below.
@@ -36,14 +37,12 @@ export default defineEventHandler(async (event) => {
     ? await verifyPassword(password, user.passwordHash)
     : await verifyAgainstDummy(password)
 
-  if (!user || !passwordOk) {
-    await recordRateLimitHit(LIMITS.loginFailEmailIp, emailIp)
-    await recordRateLimitHit(LIMITS.loginFailIp, [ip])
-    apiError(401, 'invalid_credentials')
-  }
+  if (!user || !passwordOk) apiError(401, 'invalid_credentials')
 
-  // A success wipes this email+IP's failures (but not the IP-wide counter).
+  // A success wipes this email+IP's failures, and gives back its own hit on
+  // the IP-wide counter (without wiping the failures already on it).
   await clearRateLimit(LIMITS.loginFailEmailIp, emailIp)
+  await refundRateLimit(LIMITS.loginFailIp, [ip])
   await createSession(event, user.id, remember !== false)
 
   return toAuthUser(user)

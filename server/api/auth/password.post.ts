@@ -3,7 +3,7 @@ import { requireSession, verifyPassword, hashPassword } from '~~/server/utils/au
 import { apiError, readJsonObject } from '~~/server/utils/errors'
 import { assertStrongPassword } from '~~/server/utils/validate'
 import {
-  assertNotRateLimited, clearRateLimit, LIMITS, recordRateLimitHit,
+  clearRateLimit, consumeRateLimit, LIMITS,
 } from '~~/server/utils/rateLimit'
 
 /**
@@ -24,13 +24,13 @@ export default defineEventHandler(async (event) => {
   // Validate the new one first: a typo in it shouldn't count as a wrong-password strike.
   assertStrongPassword(next)
 
-  await assertNotRateLimited(event, LIMITS.passwordFailUser, [userId])
+  // Counted before the check, cleared on success (see rateLimit.ts).
+  await consumeRateLimit(event, LIMITS.passwordFailUser, [userId])
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } })
   if (!user) apiError(401, 'not_authenticated')
 
   if (!(await verifyPassword(current, user.passwordHash))) {
-    await recordRateLimitHit(LIMITS.passwordFailUser, [userId])
     // 403, not 401: you ARE signed in; the password you typed is just wrong.
     apiError(403, 'wrong_password')
   }
