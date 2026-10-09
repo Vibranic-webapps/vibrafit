@@ -1,0 +1,312 @@
+/* ============================================================================
+   VIBRAFIT DESIGN SYSTEM — "Chalk & Signal"
+   ============================================================================
+   Athletic poster meets training journal. Bold, honest, a bit raw. Built for
+   a phone mid-workout: sweaty hands, one hand, quick glances — so this system
+   favours huge condensed numbers, hairline flat surfaces and high contrast
+   over decoration.
+
+   Decided 2026-10-06. Source: KF OS/03 Projects/vibrafit/03 Design/
+   (C) Visual direction - proposal.md (section 1) + (C) Inspiration - SHRED.md.
+
+   WORKING RULES (read before you touch this file or a ui/* component)
+   ---------------------------------------------------------------------------
+   1. No shadows, anywhere. Chalk & Signal is flat, like a printed page.
+      Depth comes from hairline borders (--vf-color-border) only.
+   2. Never write a raw hex / px / ms value inside a component. Every colour,
+      size, radius, spacing and duration comes from a --vf-* token below.
+   3. Orange (--vf-color-accent) is never used for small text on a light
+      background — it fails contrast (3.25:1, needs 4.5:1). Use
+      --vf-color-accent-text instead. Both are already tuned per mode.
+   4. Light and dark are two DESIGNED palettes, not one inverted into the
+      other. If you add a colour, add it to BOTH the light block and the
+      dark block, deliberately.
+   5. Numbers (reps, load, timers, counts) always use --vf-font-display with
+      tabular-nums (see .vf-num) — they must not shift width while counting.
+   6. Respect prefers-reduced-motion — it's handled globally below, but any
+      new animation must check for it too.
+
+   Living reference: /design — every token and component state is rendered
+   there with a light/dark switch. If you change a value here, check it.
+   ============================================================================ */
+
+:root {
+  /* ---------------------------------------------------------------------
+     COLOUR — light (default; also the fallback before JS/cookie resolve)
+     --------------------------------------------------------------------- */
+  --vf-color-bg: #f1f3f2;
+  --vf-color-surface: #ffffff;
+  --vf-color-text: #111513;
+  --vf-color-muted: #505955;
+  --vf-color-accent: #f04e12;
+  --vf-color-on-accent: #111513;
+  --vf-color-accent-text: #b93a0b;
+  --vf-color-good: #1e7a4c;
+  --vf-color-on-good: #ffffff;
+  --vf-color-hard: #b42318;
+  --vf-color-border: #d5dad7; /* hairline, decorative dividers/cards */
+  --vf-color-control-border: #7a847f; /* stepper/feeling buttons, ≥3:1 on bg+surface */
+  /* Ring track deviates from the proposal doc's "#DDE2DF": the brief asks to
+     darken it, but measured against the orange ring (#F04E12) that direction
+     made contrast WORSE (DDE2DF measured 2.76:1; darker greys dropped under
+     2.4:1). The orange is the darker of the two colours here, so a *lighter*
+     track raises the ratio. #EAEEEB measures 3.09:1 — flagged in the report. */
+  --vf-color-ring-track: #eaeeeb;
+  --vf-color-chip-bg: #e6eae8;
+  --vf-color-hint-bg: #ffe9df;
+
+  /* ---------------------------------------------------------------------
+     TYPE
+     --------------------------------------------------------------------- */
+  --vf-font-display: 'Barlow Condensed', sans-serif; /* headings, all numbers */
+  --vf-font-body: 'Barlow', sans-serif;
+
+  --vf-weight-body: 400;
+  --vf-weight-medium: 500;
+  --vf-weight-semibold: 600;
+  --vf-weight-display: 800;
+
+  --vf-display-case: uppercase; /* one token: change here to retire all-caps */
+  --vf-display-track: 0.01em;
+  --vf-label-track: 0.08em;
+  --vf-button-track: 0.06em;
+
+  --vf-leading-tight: 1.05;
+  --vf-leading-snug: 1.2;
+  --vf-leading-normal: 1.5;
+
+  /* Modular-ish scale, bent toward the two extremes this app actually needs:
+     a 16px body floor (ease-of-use non-negotiable) and a 96px "glance from
+     across the room" number for reps/timers mid-workout. */
+  --vf-text-xs: 0.75rem; /* 12px — micro labels only, never body copy */
+  --vf-text-sm: 0.875rem; /* 14px — secondary/meta lines */
+  --vf-text-base: 1rem; /* 16px — body text floor */
+  --vf-text-md: 1.125rem; /* 18px */
+  --vf-text-lg: 1.375rem; /* 22px — card titles */
+  --vf-text-xl: 1.75rem; /* 28px — section headings */
+  --vf-text-2xl: 2.25rem; /* 36px */
+  --vf-text-display: 2.5rem; /* 40px — page H1 */
+  --vf-text-timer: 4rem; /* 64px — rest timer */
+  --vf-text-huge: 6rem; /* 96px — reps stepper */
+
+  /* ---------------------------------------------------------------------
+     SPACING (4px base)
+     --------------------------------------------------------------------- */
+  --vf-space-1: 0.25rem; /* 4px */
+  --vf-space-2: 0.5rem; /* 8px */
+  --vf-space-3: 0.75rem; /* 12px */
+  --vf-space-4: 1rem; /* 16px */
+  --vf-space-5: 1.25rem; /* 20px */
+  --vf-space-6: 1.5rem; /* 24px */
+  --vf-space-8: 2rem; /* 32px */
+  --vf-space-10: 2.5rem; /* 40px */
+  --vf-space-12: 3rem; /* 48px */
+  --vf-space-16: 4rem; /* 64px */
+  --vf-space-half: 2px; /* tight gaps only: segmented-control chrome, focus offset */
+
+  /* ---------------------------------------------------------------------
+     SHAPE — flat, square-ish. No shadow token exists on purpose.
+     --------------------------------------------------------------------- */
+  --vf-radius: 6px; /* cards, buttons, stepper keys */
+  --vf-radius-sm: 4px; /* chips, set-boxes */
+  --vf-radius-none: 0px; /* progress segments (SHRED: square, not pills) */
+
+  /* Border weights — the only "elevation" tool Chalk & Signal allows. */
+  --vf-border-thin: 1px; /* hairline dividers, default card edge */
+  --vf-border: 1.5px; /* interactive control edges (buttons, stepper, feeling) */
+  --vf-border-thick: 2px; /* small status dots/boxes (set box, week-strip dot) */
+  --vf-border-hero: 3px; /* hero card's accent top edge */
+
+  /* One-off component sizes that don't belong on the spacing scale (they're
+     a single primitive's fixed footprint, not a reusable gap/padding). */
+  --vf-size-stepper-key: 72px;
+  --vf-size-dot-sm: 30px; /* UiSetBox */
+  --vf-size-dot-md: 36px; /* UiWeekStrip */
+  --vf-size-spinner: 20px; /* UiButton loading spinner */
+  --vf-size-segment-min: 68px; /* UiThemeSwitch option min-width */
+
+  /* ---------------------------------------------------------------------
+     TOUCH / A11Y
+     --------------------------------------------------------------------- */
+  --vf-tap-min: 48px;
+
+  /* ---- Layout widths (phone-first: content never stretches on desktop) ---- */
+  --vf-width-form: 400px; /* sign-in screens, single forms */
+  --vf-width-page: 480px; /* signed-in single-column pages (You, Today...) */
+
+  /* ---------------------------------------------------------------------
+     MOTION — short and punchy. prefers-reduced-motion is handled below.
+     --------------------------------------------------------------------- */
+  --vf-duration-fast: 120ms;
+  --vf-duration-base: 150ms;
+  --vf-duration-slow: 180ms;
+  --vf-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --vf-ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot for the "set logged" stamp */
+
+  /* ---------------------------------------------------------------------
+     Z-INDEX
+     --------------------------------------------------------------------- */
+  --vf-z-tabbar: 10;
+  --vf-z-overlay: 100;
+}
+
+/* Follows the phone by default (no data-theme attribute = "system"). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --vf-color-bg: #0e1110;
+    --vf-color-surface: #181c1a;
+    --vf-color-text: #eef1ef;
+    --vf-color-muted: #9ba5a0;
+    --vf-color-accent: #ff6a33;
+    --vf-color-on-accent: #111513;
+    --vf-color-accent-text: #ff8a5c;
+    --vf-color-good: #4cc38a;
+    --vf-color-on-good: #0e1110;
+    --vf-color-hard: #ff6b5e;
+    --vf-color-border: #2a302d;
+    --vf-color-control-border: #6b7570;
+    --vf-color-ring-track: #262c29; /* already ≥3:1 against the dark accent, unchanged from the proposal */
+    --vf-color-chip-bg: #232826;
+    --vf-color-hint-bg: #2a1a12;
+  }
+}
+
+/* Manual override from useTheme(), set as data-theme on <html>. */
+[data-theme='dark'] {
+  --vf-color-bg: #0e1110;
+  --vf-color-surface: #181c1a;
+  --vf-color-text: #eef1ef;
+  --vf-color-muted: #9ba5a0;
+  --vf-color-accent: #ff6a33;
+  --vf-color-on-accent: #111513;
+  --vf-color-accent-text: #ff8a5c;
+  --vf-color-good: #4cc38a;
+  --vf-color-on-good: #0e1110;
+  --vf-color-hard: #ff6b5e;
+  --vf-color-border: #2a302d;
+  --vf-color-control-border: #6b7570;
+  --vf-color-ring-track: #262c29;
+  --vf-color-chip-bg: #232826;
+  --vf-color-hint-bg: #2a1a12;
+}
+
+/* ============================================================================
+   BASE / RESET
+   ============================================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--vf-color-bg);
+  color: var(--vf-color-text);
+  font-family: var(--vf-font-body);
+  font-size: var(--vf-text-base);
+  line-height: var(--vf-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background var(--vf-duration-base) var(--vf-ease), color var(--vf-duration-base) var(--vf-ease);
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Visible, consistent focus ring everywhere — accent measures ≥3:1 against
+   both bg and surface in both modes, so it never needs a per-component fix. */
+:focus-visible {
+  outline: var(--vf-border-thick) solid var(--vf-color-accent);
+  outline-offset: var(--vf-space-half);
+  border-radius: var(--vf-radius-sm);
+}
+
+/* ============================================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================================ */
+
+.vf-display {
+  font-family: var(--vf-font-display);
+  font-weight: var(--vf-weight-display);
+  text-transform: var(--vf-display-case);
+  letter-spacing: var(--vf-display-track);
+  line-height: var(--vf-leading-tight);
+}
+
+.vf-label {
+  font-family: var(--vf-font-body);
+  font-weight: var(--vf-weight-semibold);
+  font-size: var(--vf-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--vf-label-track);
+  color: var(--vf-color-muted);
+}
+
+.vf-num {
+  font-family: var(--vf-font-display);
+  font-weight: var(--vf-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.vf-muted {
+  color: var(--vf-color-muted);
+}
+
+.vf-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================================
+   MOTION
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

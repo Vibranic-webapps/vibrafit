@@ -1,0 +1,12 @@
+{
+  "name": "Vibrafit",
+  "short_name": "Vibrafit",
+  "description": "Train at home. Stay consistent. Get stronger.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E1110",
+  "theme_color": "#0E1110",
+  "icons": []
+}

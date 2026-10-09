@@ -1,0 +1,79 @@
+// Vibrafit - Prisma schema
+//
+// Rule #7 (project CLAUDE.md): multi-user from day one. Every row belongs to
+// a User, and every relation to User is `onDelete: Cascade`, so deleting an
+// account deletes everything. New models MUST follow the same pattern.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled: used by the app at runtime
+  directUrl = env("DIRECT_URL") // direct: used by prisma migrate
+}
+
+// ---------------------------------------------------------------------------
+// Auth (ported from Vibravault, minus the finance relations)
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique // stored trimmed + lowercased (the API normalizes)
+  name         String? // what the app calls you; optional
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Session {
+  id String @id @default(cuid())
+
+  // The cookie carries 32 random bytes; the DB only ever stores their SHA-256
+  // hash. A leaked database therefore yields no usable session cookies.
+  // Plain SHA-256 is enough: the token is already high-entropy random, so it
+  // does not need the slow salted hashing that human passwords require.
+  hashedToken String @unique
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime // no default - computed at login (now + 30 days / 12 hours)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  hashedToken String    @unique // same idea as Session: the email link has the raw token
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime // short-lived: 1 hour
+  usedAt      DateTime? // single use - a link works exactly once
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Rate limiting
+// ---------------------------------------------------------------------------
+
+// One row per limited "bucket" (e.g. failed logins for one email+IP).
+// Lives in Postgres because Vercel runs many short-lived instances with no
+// shared memory: an in-memory counter would reset on every cold start and
+// differ per instance. See server/utils/rateLimit.ts.
+//
+// Deliberately NOT related to User: limits must also apply to emails that
+// have no account. The key holds a SHA-256 hash, never a raw email or IP,
+// and rows older than a day are swept, so nothing personal lingers.
+model RateLimit {
+  key         String   @id // "<bucket>:<sha256>"
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart]) // for the sweep of stale rows
+}
