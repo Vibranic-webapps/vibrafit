@@ -12,6 +12,9 @@ import { CalendarCheck, Dumbbell, History, User } from 'lucide-vue-next'
  */
 type TabKey = 'today' | 'history' | 'equipment' | 'you'
 
+/** Flip to true when app/pages/history.vue exists (Phase 2). */
+const HISTORY_READY = false
+
 const props = defineProps<{ forceActive?: TabKey }>()
 
 const route = useRoute()
@@ -19,7 +22,8 @@ const { t } = useI18n()
 
 const tabs: { key: TabKey; to: string; icon: typeof CalendarCheck; label: () => string }[] = [
   { key: 'today', to: '/', icon: CalendarCheck, label: () => t('tabs.today') },
-  { key: 'history', to: '/history', icon: History, label: () => t('tabs.history') },
+  // History is Phase 2: the tab comes back with the /history page (no dead link until then).
+  ...(HISTORY_READY ? [{ key: 'history' as const, to: '/history', icon: History, label: () => t('tabs.history') }] : []),
   { key: 'equipment', to: '/equipment', icon: Dumbbell, label: () => t('tabs.equipment') },
   { key: 'you', to: '/you', icon: User, label: () => t('tabs.you') },
 ]

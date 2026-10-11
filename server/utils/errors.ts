@@ -22,6 +22,7 @@ export type ApiErrorCode =
   | 'rate_limited' // data.retryAfter = seconds; also a Retry-After header
   | 'equipment_too_large' // more gear than the load calculator accepts; data.limit names the cap
   | 'catalog_missing' // server setup problem, not the user's: the exercise catalog was never seeded (npm run db:seed)
+  | 'not_found' // no such thing for THIS user (also for another user's id: never reveal it exists)
   | 'invalid_origin' // a write to /api/* that didn't come from this app's own pages
 
 export function apiError(
