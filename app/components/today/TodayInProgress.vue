@@ -35,7 +35,7 @@ const progressLabel = computed(() =>
           <p class="vf-label">{{ t('today.inProgress') }}</p>
           <p class="vf-display today-progress__title">{{ name }}</p>
           <p v-if="done !== null && total !== null && sets !== null" class="vf-muted today-progress__meta">
-            {{ t('today.progressMeta', { done, total, sets }) }}
+            {{ t('today.progressMeta', { done, total, sets }, sets) }}
           </p>
         </div>
         <UiProgressSegments v-if="segments && segments.length" :segments="segments" :label="progressLabel" />

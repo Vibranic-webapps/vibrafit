@@ -79,7 +79,9 @@ const over = computed(() => props.remaining <= 0)
 .wk-rest__fix {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: var(--vf-tap-min);
+  min-width: var(--vf-tap-min);
   padding: 0 var(--vf-space-2);
   background: none;
   border: 0;

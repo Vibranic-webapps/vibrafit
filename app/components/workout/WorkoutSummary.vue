@@ -24,7 +24,12 @@ const label = computed(() =>
     : t('workout.summary.labelNoDay', { min: props.summary.minutes })
 )
 
-const savedLine = computed(() => (sync.hasPending.value ? t('workout.summary.savedOffline') : t('workout.summary.saved')))
+const queue = useSetQueue()
+// "Will sync when you're back online" only when actually offline; online, the
+// last sets are uploaded within seconds and the sync badge shows that.
+const savedLine = computed(() =>
+  sync.hasPending.value && !queue.online.value ? t('workout.summary.savedOffline') : t('workout.summary.saved')
+)
 
 const rows = computed(() =>
   props.summary.rows.map((row) => {
@@ -65,11 +70,11 @@ const rows = computed(() =>
       </div>
       <div>
         <p class="vf-num wk-sum__stat">{{ summary.setCount }}</p>
-        <p class="vf-label">{{ t('workout.summary.sets') }}</p>
+        <p class="vf-label">{{ t('workout.summary.sets', summary.setCount) }}</p>
       </div>
       <div>
         <p class="vf-num wk-sum__stat">{{ summary.minutes }}</p>
-        <p class="vf-label">{{ t('workout.summary.minutes') }}</p>
+        <p class="vf-label">{{ t('workout.summary.minutes', summary.minutes) }}</p>
       </div>
     </div>
 

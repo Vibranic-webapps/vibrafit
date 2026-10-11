@@ -19,9 +19,10 @@ const props = defineProps<{
 const { t } = useI18n()
 const text = useWorkoutText()
 
-const cueOpen = ref(props.setNumber === 1)
-// A new exercise starts with its tip open again.
-watch(() => props.exercise.slug, () => (cueOpen.value = props.setNumber === 1))
+// Closed by default: open, it pushed the feeling buttons under the Log set bar
+// on a 360x740 phone (QA 2026-10-11). One tap on "Form tip" shows it.
+const cueOpen = ref(false)
+watch(() => props.exercise.slug, () => (cueOpen.value = false))
 
 const cue = computed(() => text.cue(props.exercise))
 const subline = computed(() => {
