@@ -86,29 +86,33 @@ async function writeProgram(userId: string): Promise<void> {
     apiError(500, 'catalog_missing')
   }
 
-  // Replace the whole program in one transaction: either the old one or the
-  // new one exists, never a half-written one. Workout history survives
-  // (WorkoutSession.programDayId is SetNull).
+  // Rebuild in one transaction: either the old program or the new one exists,
+  // never a half-written one. The ProgramDay rows are KEPT (upserted by key), so
+  // WorkoutSession.programDayId survives a rebuild: workout history keeps its
+  // day, and the A/B rotation carries on. Only the exercises inside a day are
+  // replaced, and only days the template no longer has are deleted (their
+  // sessions then go SetNull, the one unavoidable case).
   await prisma.$transaction(async (tx) => {
-    await tx.programDay.deleteMany({ where: { userId } })
+    await tx.programDay.deleteMany({ where: { userId, key: { notIn: generated.map((d) => d.key) } } })
     for (const [dayIndex, day] of generated.entries()) {
-      await tx.programDay.create({
-        data: {
-          userId,
-          key: day.key,
-          order: dayIndex,
-          exercises: {
-            create: day.picks.map((pick, order) => ({
-              exerciseId: idBySlug.get(pick.slug)!,
-              order, // position in the template, which explainStoredPick relies on
-              sets: pick.sets,
-              targetMin: pick.targetMin,
-              targetMax: pick.targetMax,
-              loadGrams: pick.loadGrams,
-              loadMode: pick.loadMode,
-            })),
-          },
-        },
+      const row = await tx.programDay.upsert({
+        where: { userId_key: { userId, key: day.key } },
+        create: { userId, key: day.key, order: dayIndex },
+        update: { order: dayIndex },
+        select: { id: true },
+      })
+      await tx.programExercise.deleteMany({ where: { programDayId: row.id } })
+      await tx.programExercise.createMany({
+        data: day.picks.map((pick, order) => ({
+          programDayId: row.id,
+          exerciseId: idBySlug.get(pick.slug)!,
+          order, // position in the template, which explainStoredPick relies on
+          sets: pick.sets,
+          targetMin: pick.targetMin,
+          targetMax: pick.targetMax,
+          loadGrams: pick.loadGrams,
+          loadMode: pick.loadMode,
+        })),
       })
     }
   })
