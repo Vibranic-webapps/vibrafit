@@ -189,13 +189,18 @@ export function lastLoggedSet(draft: WorkoutDraft): SetRecord | null {
   return sets.length ? sets.reduce((a, b) => (b.loggedAt >= a.loggedAt ? b : a)) : null
 }
 
-/** Stepper starting value: the previous set of this exercise, else the top of its range. */
+/**
+ * Stepper starting value: the previous set of this exercise, else the BOTTOM of
+ * its range. Not the top: a quick tap on Log set would then record reps that
+ * may not have happened, and Phase 2 progression reads "top of range on every
+ * set" as "make it heavier". Under-logging is the safe mistake.
+ */
 export function prefillAmount(draft: WorkoutDraft, exercise: DraftExercise): number {
   const previous = setsOf(draft, exercise.slug)
     .filter((s) => s.amount !== null)
     .sort((a, b) => a.setNumber - b.setNumber)
     .at(-1)
-  return previous?.amount ?? exercise.targetMax
+  return previous?.amount ?? exercise.targetMin
 }
 
 // --- Changing the draft (all mutate the draft they are given) --------------------

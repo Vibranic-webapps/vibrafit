@@ -9,6 +9,8 @@ import { Plus } from 'lucide-vue-next'
 import type { Equipment } from '~~/shared/utils/loads'
 import { EQUIPMENT_LIMITS } from '~~/shared/utils/equipmentLimits'
 
+definePageMeta({ layout: 'tabs' })
+
 const { t } = useI18n()
 const L = EQUIPMENT_LIMITS
 

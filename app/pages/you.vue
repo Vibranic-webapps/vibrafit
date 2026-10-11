@@ -1,11 +1,13 @@
 <script setup lang="ts">
 /**
  * Minimal account page: name, appearance, change password, sign out, and
- * delete account. No tab bar yet (the other tabs don't exist), so this is a
- * plain page, reachable only once signed in (enforced by auth.global.ts).
+ * delete account. A tab page (layouts/tabs.vue), reachable only once signed
+ * in (enforced by auth.global.ts).
  */
 import { passwordProblems } from '~~/shared/utils/password'
 import type { AuthUser } from '~/composables/useAuthUser'
+
+definePageMeta({ layout: 'tabs' })
 
 const { t } = useI18n()
 const user = useAuthUser()
