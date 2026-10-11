@@ -9,6 +9,8 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 const props = withDefaults(
   defineProps<{
     variant?: Variant
+    /** "xl" = the 72px thumb button (Log set, Start). One per screen at most. */
+    size?: 'md' | 'xl'
     fullWidth?: boolean
     disabled?: boolean
     loading?: boolean
@@ -18,6 +20,7 @@ const props = withDefaults(
   }>(),
   {
     variant: 'primary',
+    size: 'md',
     fullWidth: false,
     disabled: false,
     loading: false,
@@ -38,7 +41,7 @@ const isDisabled = computed(() => props.disabled || props.loading)
     v-if="href && !isDisabled"
     :href="href"
     class="vf-btn"
-    :class="[`vf-btn--${variant}`, { 'vf-btn--full': fullWidth }]"
+    :class="[`vf-btn--${variant}`, `vf-btn--${size}`, { 'vf-btn--full': fullWidth }]"
   >
     <slot />
   </a>
@@ -46,7 +49,7 @@ const isDisabled = computed(() => props.disabled || props.loading)
     v-else
     :type="type"
     class="vf-btn"
-    :class="[`vf-btn--${variant}`, { 'vf-btn--full': fullWidth, 'vf-btn--loading': loading }]"
+    :class="[`vf-btn--${variant}`, `vf-btn--${size}`, { 'vf-btn--full': fullWidth, 'vf-btn--loading': loading }]"
     :disabled="isDisabled"
     :aria-busy="loading ? 'true' : undefined"
     @click="$emit('click', $event)"
@@ -78,6 +81,13 @@ const isDisabled = computed(() => props.disabled || props.loading)
   cursor: pointer;
   transition: background var(--vf-duration-base) var(--vf-ease), border-color var(--vf-duration-base) var(--vf-ease),
     color var(--vf-duration-base) var(--vf-ease), opacity var(--vf-duration-base) var(--vf-ease);
+}
+
+/* XL: sized for a sweaty thumb. Larger type + 72px height. */
+.vf-btn--xl {
+  min-height: var(--vf-size-button-xl);
+  font-size: var(--vf-text-md);
+  letter-spacing: var(--vf-button-track);
 }
 
 .vf-btn--full {

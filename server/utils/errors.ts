@@ -21,6 +21,7 @@ export type ApiErrorCode =
   | 'invalid_reset_token'
   | 'rate_limited' // data.retryAfter = seconds; also a Retry-After header
   | 'equipment_too_large' // more gear than the load calculator accepts; data.limit names the cap
+  | 'catalog_missing' // server setup problem, not the user's: the exercise catalog was never seeded (npm run db:seed)
   | 'invalid_origin' // a write to /api/* that didn't come from this app's own pages
 
 export function apiError(

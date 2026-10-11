@@ -224,5 +224,137 @@
       "skippedRows": "Some rows are incomplete and aren't counted yet.",
       "error": "Couldn't work out your loads. Check the numbers you entered."
     }
+  },
+  "exercises": {
+    "bodyweightSquat": {
+      "name": "Bodyweight squat",
+      "cue": "Sit back and down, knees tracking over your toes, heels on the floor."
+    },
+    "gobletSquat": {
+      "name": "Goblet squat",
+      "cue": "Hold the weight at your chest and keep your back tall. Control the way down."
+    },
+    "splitSquat": {
+      "name": "Split squat",
+      "cue": "Feet staggered, drop straight down. Keep your front foot flat."
+    },
+    "bulgarianSplitSquat": {
+      "name": "Bulgarian split squat",
+      "cue": "Rear foot on a sturdy chair. Check it cannot slide before you start."
+    },
+    "inclinePushUp": {
+      "name": "Incline push-up",
+      "cue": "Hands on a sturdy surface like a counter or a sofa. Body in one straight line."
+    },
+    "kneePushUp": {
+      "name": "Knee push-up",
+      "cue": "Knees on the floor, body straight from knees to head. Lower with control."
+    },
+    "pushUp": {
+      "name": "Push-up",
+      "cue": "Hands under your shoulders, body in one line. Go as low as you can control."
+    },
+    "declinePushUp": {
+      "name": "Decline push-up",
+      "cue": "Feet on a sturdy step. Keep your core tight so your back does not sag."
+    },
+    "closeGripPushUp": {
+      "name": "Close-grip push-up",
+      "cue": "Hands a little closer than usual, elbows pointing back. Drop to your knees if needed."
+    },
+    "pikePushUp": {
+      "name": "Pike push-up",
+      "cue": "Hips high, head moves toward the floor between your hands. Go only as low as you control."
+    },
+    "overheadPress": {
+      "name": "Overhead press",
+      "cue": "Press straight up without leaning back. Ribs down, core tight."
+    },
+    "floorPress": {
+      "name": "Floor press",
+      "cue": "Lying on your back, lower until your upper arms touch the floor. Press up smoothly."
+    },
+    "oneArmRow": {
+      "name": "One-arm row",
+      "cue": "Support yourself with one hand, back flat. Pull the weight toward your hip."
+    },
+    "bentOverRow": {
+      "name": "Bent-over row",
+      "cue": "Hinge forward with a flat back. Pull both weights toward your hips."
+    },
+    "towelRow": {
+      "name": "Towel row",
+      "cue": "Loop a towel around a closed, sturdy door handle. Make sure it holds before you lean back."
+    },
+    "bandRow": {
+      "name": "Band row",
+      "cue": "Sit tall with the loop band around your feet and hold it at both ends, or loop it around a sturdy fixed post. Pull to your ribs and squeeze your shoulder blades. Sit closer or hold it looser for easier, further away for harder."
+    },
+    "bandPullApart": {
+      "name": "Band pull-apart",
+      "cue": "Hold the loop band at both ends with straight arms and pull it apart to chest height. Hands closer together is easier, wider apart is harder. Keep your shoulders down."
+    },
+    "proneYTRaise": {
+      "name": "Prone Y-T raise",
+      "cue": "Lie face down and lift your arms into a Y, then a T. Light and slow. This is also the easier step if the band pull-apart is too hard."
+    },
+    "romanianDeadlift": {
+      "name": "Romanian deadlift",
+      "cue": "Push your hips back with a flat back and soft knees. Weights stay close to your legs."
+    },
+    "gluteBridge": {
+      "name": "Glute bridge",
+      "cue": "Feet flat, push your hips up until your body is in a line. Do not arch your lower back."
+    },
+    "singleLegRdl": {
+      "name": "Single-leg Romanian deadlift",
+      "cue": "Hinge on one leg, back flat. Hold on to something at first if you wobble."
+    },
+    "reverseLunge": {
+      "name": "Reverse lunge",
+      "cue": "Step back and lower straight down. Keep your front heel on the floor."
+    },
+    "bodyweightReverseLunge": {
+      "name": "Bodyweight reverse lunge",
+      "cue": "Step back and lower straight down. Hold on to something if you need balance."
+    },
+    "curl": {
+      "name": "Biceps curl",
+      "cue": "Keep your elbows by your sides. Lift and lower with control, no swinging."
+    },
+    "towelCurl": {
+      "name": "Towel curl",
+      "cue": "Pull a towel up with one hand while the other hand resists it. Keep both arms steady."
+    },
+    "tricepsExtension": {
+      "name": "Triceps extension",
+      "cue": "Elbows pointing forward, lower the weights behind your head slowly. Keep your ribs down."
+    },
+    "plank": {
+      "name": "Plank",
+      "cue": "Elbows under your shoulders, body in one line. Stop when your form slips."
+    },
+    "russianTwist": {
+      "name": "Russian twist",
+      "cue": "Lean back slightly with a tall chest and turn from your ribs. Feet down if you are unsure."
+    },
+    "deadBug": {
+      "name": "Dead bug",
+      "cue": "Lower back flat on the floor. Move opposite arm and leg slowly."
+    }
+  },
+  "program": {
+    "why": {
+      "exact": "Starting weight: {load} kg, which you can build with your gear.",
+      "closestBelow": "The plan starts around {target} kg. The heaviest you can build at or under that is {load} kg.",
+      "lightest": "The plan starts around {target} kg, but the lightest you can build is {load} kg.",
+      "altLoad": "The first choice doesn't fit your gear. {load} kg is the closest you can build to {target} kg.",
+      "noBandLoad": "You have no band, so this uses weights: {load} kg is the closest you can build to {target} kg.",
+      "band": "Uses your elastic band.",
+      "bodyweight": "Just your bodyweight. No equipment needed.",
+      "noBand": "You have no band, so this uses just your bodyweight.",
+      "noLoad": "You can't build a weight close to {target} kg, so this uses just your bodyweight.",
+      "custom": "This exercise isn't in the current starter program. Generate your program again to refresh it."
+    }
   }
 }
