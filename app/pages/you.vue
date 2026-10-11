@@ -148,7 +148,14 @@ async function deleteAccount() {
   deleteBusy.value = true
   try {
     await $fetch(ACCOUNT_URL, { method: 'DELETE', body: { password: deletePassword.value } })
+    const deletedId = user.value?.id
+    // Stop the queue and drafts right away (the plugin's watcher would only do
+    // it on the next tick), so an in-flight sync can't write them back after
+    // they're cleared.
+    useSetQueue().reset()
+    useWorkoutDraft().reset()
     user.value = null
+    if (deletedId) clearUserData(deletedId)
     await navigateTo('/login?deleted=1')
   } catch (e: unknown) {
     const code = serverMessage(e)
