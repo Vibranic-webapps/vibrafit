@@ -196,6 +196,9 @@ async function deleteAccount() {
       </form>
     </UiCard>
 
+    <!-- Equipment ---------------------------------------------------------->
+    <NuxtLink to="/equipment" class="you__link">{{ t('tabs.equipment') }} &rarr;</NuxtLink>
+
     <!-- Appearance -------------------------------------------------------->
     <UiCard>
       <p class="vf-label you__section-label">{{ t('auth.you.appearance') }}</p>
@@ -300,6 +303,19 @@ async function deleteAccount() {
   max-width: var(--vf-width-page);
   margin: 0 auto;
   padding: var(--vf-space-6) var(--vf-space-4) var(--vf-space-16);
+}
+
+.you__link {
+  display: flex;
+  align-items: center;
+  min-height: var(--vf-tap-min);
+  padding: 0 var(--vf-space-5);
+  border: var(--vf-border-thin) solid var(--vf-color-border);
+  border-radius: var(--vf-radius);
+  background: var(--vf-color-surface);
+  color: var(--vf-color-accent-text);
+  font-weight: var(--vf-weight-semibold);
+  text-decoration: none;
 }
 
 .you__title {

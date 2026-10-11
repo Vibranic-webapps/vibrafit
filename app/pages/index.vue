@@ -19,7 +19,8 @@ const signedInAs = computed(() => user.value?.name || user.value?.email || '')
       {{ t('auth.you.signedInAs', { who: signedInAs }) }}
       <NuxtLink to="/you" class="home__inline-link">{{ t('auth.you.title') }}</NuxtLink>
     </p>
-    <NuxtLink to="/design" class="home__link">View the design system &rarr;</NuxtLink>
+    <NuxtLink to="/equipment" class="home__link">{{ t('tabs.equipment') }} &rarr;</NuxtLink>
+    <NuxtLink to="/design" class="home__link home__link--next">View the design system &rarr;</NuxtLink>
   </main>
 </template>
 
@@ -64,5 +65,8 @@ const signedInAs = computed(() => user.value?.name || user.value?.email || '')
   color: var(--vf-color-accent-text);
   font-weight: var(--vf-weight-semibold);
   text-decoration: none;
+}
+.home__link--next {
+  margin-top: 0;
 }
 </style>
