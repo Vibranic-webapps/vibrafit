@@ -54,6 +54,7 @@
   --vf-color-ring-track: #eaeeeb;
   --vf-color-chip-bg: #e6eae8;
   --vf-color-hint-bg: #ffe9df;
+  --vf-color-scrim: rgba(17, 21, 19, 0.55); /* behind bottom sheets (UiSheet) */
 
   /* ---------------------------------------------------------------------
      TYPE
@@ -124,6 +125,9 @@
   --vf-size-dot-md: 36px; /* UiWeekStrip */
   --vf-size-spinner: 20px; /* UiButton loading spinner */
   --vf-size-segment-min: 68px; /* UiThemeSwitch option min-width */
+  --vf-size-button-xl: 72px; /* UiButton size="xl": the Log set / Start thumb button */
+  --vf-size-sync-chip: 32px; /* UiSyncBadge height (status only, not a tap target) */
+  --vf-size-sheet-handle-w: 40px; /* UiSheet grab-bar */
 
   /* ---------------------------------------------------------------------
      TOUCH / A11Y
@@ -168,6 +172,7 @@
     --vf-color-ring-track: #262c29; /* already ≥3:1 against the dark accent, unchanged from the proposal */
     --vf-color-chip-bg: #232826;
     --vf-color-hint-bg: #2a1a12;
+    --vf-color-scrim: rgba(0, 0, 0, 0.72);
   }
 }
 
@@ -188,6 +193,7 @@
   --vf-color-ring-track: #262c29;
   --vf-color-chip-bg: #232826;
   --vf-color-hint-bg: #2a1a12;
+  --vf-color-scrim: rgba(0, 0, 0, 0.72);
 }
 
 /* ============================================================================
