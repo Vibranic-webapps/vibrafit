@@ -3,6 +3,9 @@
 // Rule #7 (project CLAUDE.md): multi-user from day one. Every row belongs to
 // a User, and every relation to User is `onDelete: Cascade`, so deleting an
 // account deletes everything. New models MUST follow the same pattern.
+// (The only exception is the global Exercise catalog, see below.)
+//
+// Rule #2: weights are stored as integer GRAMS, never floats.
 
 generator client {
   provider = "prisma-client-js"
@@ -25,8 +28,19 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
+  // Weekly goal (Phase 2 reads these; the columns exist from Phase 1).
+  weeklyGoal   Int   @default(3)
+  trainingDays Int[] @default([]) // preferred days as ISO weekdays: 1 = Monday ... 7 = Sunday
+
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  equipment           Equipment?
+  plates              Plate[]
+  fixedWeights        FixedWeight[]
+  bands               Band[]
+  programDays         ProgramDay[]
+  workoutSessions     WorkoutSession[]
+  setLogs             SetLog[]
 }
 
 model Session {
@@ -76,4 +90,212 @@ model RateLimit {
   windowStart DateTime
 
   @@index([windowStart]) // for the sweep of stale rows
+}
+
+// ---------------------------------------------------------------------------
+// Equipment (what the user owns). Together these rows are the input of
+// buildableLoads() in shared/utils/loads.ts.
+// ---------------------------------------------------------------------------
+
+// Adjustable dumbbell handles. 1:1 with User: no row = "no handles yet".
+model Equipment {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  handleCount Int // how many handles
+  handleGrams Int // empty weight of ONE handle
+  updatedAt   DateTime @updatedAt
+}
+
+// Loose plates: `count` plates that each weigh `grams`.
+model Plate {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grams  Int
+  count  Int
+
+  @@unique([userId, grams]) // one row per plate weight (the API merges duplicates)
+}
+
+// Fixed-weight implements (weight ball, kettlebell).
+model FixedWeight {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grams  Int
+  count  Int
+  label  String
+
+  @@index([userId])
+}
+
+// Elastic bands. A band has no gram weight; `resistance` is free text copied
+// from its label (e.g. "medium"), so we never invent a made-up scale.
+model Band {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String
+  resistance String?
+  count      Int
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Exercise catalog
+// ---------------------------------------------------------------------------
+
+// How an exercise is loaded. The two weighted types match LoadMode in
+// shared/utils/loads.ts. There is deliberately no separate "fixed" type: a
+// weight ball or kettlebell is a `single` (or `pair`) load whose LoadOption
+// kind is 'fixed', so the load calculator already covers it.
+enum LoadType {
+  single // one implement (goblet squat, one-arm row)
+  pair // two implements, one per hand (overhead press, reverse lunge)
+  band // elastic band
+  bodyweight // no load
+}
+
+// What an `amount` counts for an exercise.
+enum Measure {
+  reps
+  seconds // timed holds, e.g. plank
+}
+
+// How a set felt.
+enum Feeling {
+  easy
+  good
+  hard
+}
+
+// Same two values as LoadMode in shared/utils/loads.ts.
+enum LoadMode {
+  single
+  pair
+}
+
+// The one deliberate exception to "every row has a userId": the exercise
+// catalog is GLOBAL, shared by all users (everyone's squat is the same squat,
+// seeded once), so it is not user-owned and has no cascade. Nothing in it is
+// personal. Per-user data (program, logs) references it with the default
+// Restrict, so an exercise that is in use can never be deleted by accident.
+model Exercise {
+  id       String   @id @default(cuid())
+  slug     String   @unique // stable id for seeding, e.g. "goblet-squat"
+  nameKey  String // i18n key of the display name; no English text stored here
+  loadType LoadType
+  measure  Measure  @default(reps)
+  perSide  Boolean  @default(false) // "10 / side" (one-arm row, reverse lunge)
+
+  // Progression ladder: when the load can't go up, move to the harder variation.
+  easierId String?
+  easier   Exercise?  @relation("EasierVariation", fields: [easierId], references: [id], onDelete: SetNull)
+  easierOf Exercise[] @relation("EasierVariation")
+  harderId String?
+  harder   Exercise?  @relation("HarderVariation", fields: [harderId], references: [id], onDelete: SetNull)
+  harderOf Exercise[] @relation("HarderVariation")
+
+  programExercises ProgramExercise[]
+  setLogs          SetLog[]
+
+  @@index([easierId])
+  @@index([harderId])
+}
+
+// ---------------------------------------------------------------------------
+// Program (generated per user from their equipment)
+// ---------------------------------------------------------------------------
+
+model ProgramDay {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String // "A" / "B"
+  order  Int // position in the rotation
+
+  exercises ProgramExercise[]
+  sessions  WorkoutSession[]
+
+  @@unique([userId, key])
+}
+
+model ProgramExercise {
+  id           String     @id @default(cuid())
+  programDayId String
+  programDay   ProgramDay @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id])
+  order        Int
+  sets         Int
+  targetMin    Int // reps or seconds, per exercise.measure
+  targetMax    Int
+  loadGrams    Int? // load in ONE hand / implement; null for bodyweight and bands
+  loadMode     LoadMode? // null when loadGrams is null
+
+  @@unique([programDayId, order])
+  @@index([exerciseId])
+}
+
+// ---------------------------------------------------------------------------
+// Workout logging
+// ---------------------------------------------------------------------------
+
+model WorkoutSession {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // SetNull: regenerating the program must not delete the workout history.
+  programDayId String?
+  programDay   ProgramDay? @relation(fields: [programDayId], references: [id], onDelete: SetNull)
+
+  // The calendar date of the workout in Europe/Brussels, NOT the UTC date: a
+  // 00:30 workout belongs to the Brussels day it happened on. The server
+  // computes it; the weekly goal (Monday to Sunday) counts on this column.
+  date       DateTime  @db.Date
+  isShort    Boolean   @default(false) // the 10-minute version
+  startedAt  DateTime
+  finishedAt DateTime?
+
+  // Generated on the device so a session started offline can be re-sent safely.
+  clientId String
+
+  setLogs SetLog[]
+
+  @@unique([userId, clientId])
+  @@index([userId, date])
+  @@index([programDayId])
+}
+
+model SetLog {
+  id         String         @id @default(cuid())
+  // userId is redundant with session.userId on purpose: direct scoping, no join.
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId  String
+  session    WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise       @relation(fields: [exerciseId], references: [id])
+
+  setNumber      Int // 1-based within the exercise
+  // Reps or seconds, depending on exercise.measure. One column, not two: the
+  // exercise already says what it counts, and the progression engine treats
+  // both as "the amount done". Null when the set was skipped for pain.
+  amount         Int?
+  loadGrams      Int? // load in ONE hand / implement
+  feeling        Feeling?
+  skippedForPain Boolean  @default(false)
+  loggedAt       DateTime
+
+  // Generated on the device; a re-sent offline set hits this unique key and is
+  // ignored, so a set is never saved twice (rule #6).
+  clientId String
+
+  @@unique([userId, clientId])
+  @@index([sessionId])
+  @@index([userId, exerciseId, loggedAt]) // "last sessions of this exercise" (progression)
+  @@index([exerciseId])
 }
