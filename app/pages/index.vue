@@ -11,6 +11,8 @@ import { brusselsDate } from '~~/shared/utils/brusselsDate'
 import { doneExerciseCount, loggedSets, segmentsOf } from '~/utils/workoutDraft'
 import type { ProgramDay, ProgramDto, TodayDto } from '~/utils/workoutTypes'
 
+definePageMeta({ layout: 'tabs' })
+
 const { t, localeProperties } = useI18n()
 useHead({ title: computed(() => t('today.title')) })
 
@@ -313,18 +315,14 @@ async function rebuildProgram() {
         @confirm="confirmFinish"
       />
     </main>
-
-    <div class="today__tabbar">
-      <UiTabBar />
-    </div>
   </div>
 </template>
 
 <style scoped>
 .today {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
 }
 
 .today__content {
@@ -358,12 +356,6 @@ async function rebuildProgram() {
   flex-direction: column;
   align-items: flex-end;
   gap: var(--vf-space-2);
-}
-
-.today__tabbar {
-  position: sticky;
-  bottom: 0;
-  z-index: var(--vf-z-tabbar);
 }
 
 .today__skeleton {
