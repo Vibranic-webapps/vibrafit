@@ -140,5 +140,89 @@
       "invalid_origin": "This request was blocked for your safety. Reload the page and try again.",
       "generic": "Something went wrong. Check your connection and try again."
     }
+  },
+  "equipment": {
+    "title": "Equipment",
+    "intro": "Enter the gear you own. Vibrafit only ever suggests weights you can actually build.",
+    "kg": "kg",
+    "remove": "Remove {what}",
+    "add": "Add",
+    "limitReached": "You've reached the limit of {max}.",
+    "unsaved": "Unsaved changes",
+    "upToDate": "All changes saved",
+    "save": "Save equipment",
+    "saved": "Equipment saved.",
+    "loading": "Loading your equipment",
+    "loadError": "Couldn't load your equipment.",
+    "retry": "Try again",
+    "back": "Back",
+    "fixErrors": "Fix the highlighted fields to save.",
+    "errors": {
+      "invalid_input": "Something in the form isn't valid. Check the fields and try again.",
+      "equipment_too_large": "That's more gear than Vibrafit can store. Remove a few items and try again.",
+      "generic": "Couldn't save. Check your connection and try again.",
+      "weight": "Enter a weight in kg, like 1.25.",
+      "weightMax": "Maximum is {max} kg.",
+      "weightPositive": "Weight must be more than 0.",
+      "count": "Enter a whole number.",
+      "countRange": "Enter a number from {min} to {max}.",
+      "label": "Enter a name (1 to {max} characters).",
+      "resistance": "Keep it under {max} characters.",
+      "plateTotal": "Up to {max} plates in total. You have {total}."
+    },
+    "handles": {
+      "title": "Dumbbell handles",
+      "hint": "Adjustable dumbbells: the bars you slide plates onto.",
+      "count": "How many handles",
+      "weight": "Empty handle weight",
+      "weightHint": "0 means not weighed yet. Loads then leave out the handle weight."
+    },
+    "plates": {
+      "title": "Plates",
+      "hint": "Loose plates for your handles. Add one row per plate weight.",
+      "weight": "Plate weight",
+      "count": "How many",
+      "row": "plate row {n}",
+      "add": "Add plate weight",
+      "empty": "No plates yet."
+    },
+    "fixed": {
+      "title": "Fixed weights",
+      "hint": "Things that can't change weight: a weight ball, a kettlebell.",
+      "label": "Name",
+      "weight": "Weight",
+      "count": "How many",
+      "row": "fixed weight row {n}",
+      "add": "Add fixed weight",
+      "empty": "No fixed weights yet."
+    },
+    "bands": {
+      "title": "Bands",
+      "hint": "Resistance bands. They're tracked for your exercises, not turned into kilograms.",
+      "label": "Name",
+      "resistance": "Resistance (optional)",
+      "resistanceHint": "For example light, medium or 15 kg.",
+      "count": "How many",
+      "row": "band row {n}",
+      "add": "Add band",
+      "empty": "No bands yet."
+    },
+    "loads": {
+      "title": "Loads you can build",
+      "empty": "Add handles and plates, or a fixed weight, to see what you can build.",
+      "pairs": "Pairs",
+      "pairsHint": "Two dumbbells at the same weight. The weight is per hand.",
+      "singles": "Singles",
+      "singlesHint": "One dumbbell or one fixed weight.",
+      "kg": "{kg} kg",
+      "perSide": "{plates} kg per side",
+      "perSideEach": "{plates} kg per side, both dumbbells",
+      "perSideSplit": "One with {first} kg per side, the other with {second} kg per side",
+      "noPlates": "no plates",
+      "handleOnly": "Handle only",
+      "handlesUnweighed": "Your handles aren't weighed yet, so these loads leave out the handle weight.",
+      "skippedRows": "Some rows are incomplete and aren't counted yet.",
+      "error": "Couldn't work out your loads. Check the numbers you entered."
+    }
   }
 }
