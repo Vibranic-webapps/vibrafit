@@ -246,7 +246,9 @@ export async function getToday(userId: string, now: Date = new Date()): Promise<
       select: { clientId: true, isShort: true, startedAt: true, programDay: { select: { key: true } } },
     }),
     prisma.workoutSession.findFirst({
-      where: { userId, finishedAt: { not: null }, date: new Date(`${date}T00:00:00Z`) },
+      // Only a workout with at least one trained set counts as "done today": one
+      // closed with no sets (or only pain-skips) must not hide a real one or Start.
+      where: { userId, finishedAt: { not: null }, date: new Date(`${date}T00:00:00Z`), setLogs: { some: trained } },
       orderBy: { finishedAt: 'desc' },
       select: { id: true, clientId: true, programDay: { select: { key: true } } },
     }),
