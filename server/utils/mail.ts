@@ -18,7 +18,7 @@ interface SendArgs {
 
 export async function sendMail({ to, subject, html, text }: SendArgs): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.MAIL_FROM ?? 'Vibrafit <noreply@kilianfrederix.net>'
+  const from = process.env.MAIL_FROM || 'Vibrafit <noreply@kilianfrederix.net>'
 
   if (!apiKey) {
     // Production: a reset link in the logs is a working account-takeover
