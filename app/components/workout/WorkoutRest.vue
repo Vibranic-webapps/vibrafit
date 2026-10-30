@@ -18,9 +18,11 @@ const props = defineProps<{
   nextDetail: string
   /** Primary button label once rest is over. */
   startLabel: string
+  /** Rest ends by itself and the next set opens. */
+  autoContinue: boolean
 }>()
 
-defineEmits<{ primary: []; add15: []; fix: [] }>()
+defineEmits<{ primary: []; add15: []; fix: []; toggleAuto: [] }>()
 
 const { t } = useI18n()
 const text = useWorkoutText()
@@ -40,6 +42,17 @@ const over = computed(() => props.remaining <= 0)
         :done-label="t('workout.restOver')"
         :time-label="over ? t('workout.restOver') : text.spokenTime(remaining)"
       />
+      <button
+        type="button"
+        class="wk-rest__auto"
+        role="switch"
+        :aria-checked="autoContinue"
+        @click="$emit('toggleAuto')"
+      >
+        <span class="wk-rest__auto-track" aria-hidden="true"><span class="wk-rest__auto-thumb" /></span>
+        <span>{{ t('workout.autoContinue') }}</span>
+        <span class="vf-visually-hidden">{{ autoContinue ? t('workout.autoOn') : t('workout.autoOff') }}</span>
+      </button>
       <p class="vf-muted wk-rest__logged">
         {{ loggedLine }}
         <button v-if="canFix" type="button" class="wk-rest__fix" @click="$emit('fix')">{{ t('workout.fix') }}</button>
@@ -69,6 +82,58 @@ const over = computed(() => props.remaining <= 0)
   padding-top: var(--vf-space-6);
   /* The rest block fades in and rises a little when it replaces the log state. */
   animation: wk-rest-in var(--vf-duration-slow) var(--vf-ease);
+}
+
+.wk-rest__auto {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: var(--vf-space-2);
+  min-height: var(--vf-tap-min);
+  padding: 0 var(--vf-space-2);
+  background: none;
+  border: 0;
+  color: var(--vf-color-text);
+  font: inherit;
+  font-size: var(--vf-text-sm);
+  font-weight: var(--vf-weight-semibold);
+  cursor: pointer;
+}
+
+.wk-rest__auto-track {
+  display: inline-flex;
+  align-items: center;
+  width: 2.5rem;
+  height: 1.5rem;
+  padding: 2px;
+  border: var(--vf-border) solid var(--vf-color-text);
+  border-radius: 999px;
+  transition: background var(--vf-duration-fast) var(--vf-ease);
+}
+
+.wk-rest__auto-thumb {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--vf-color-text);
+  transition: transform var(--vf-duration-fast) var(--vf-ease), background var(--vf-duration-fast) var(--vf-ease);
+}
+
+.wk-rest__auto[aria-checked='true'] .wk-rest__auto-track {
+  background: var(--vf-color-accent);
+  border-color: var(--vf-color-accent);
+}
+
+.wk-rest__auto[aria-checked='true'] .wk-rest__auto-thumb {
+  transform: translateX(1rem);
+  background: var(--vf-color-on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wk-rest__auto-track,
+  .wk-rest__auto-thumb {
+    transition: none;
+  }
 }
 
 .wk-rest__logged {

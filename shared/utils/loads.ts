@@ -194,6 +194,16 @@ export function buildableLoads(equipment: Equipment): LoadOption[] {
 }
 
 /** Distinct loads for one mode, lightest first. */
+/**
+ * The plate recipe for a load the program picked: plates on ONE side of each
+ * dumbbell, heaviest first. null for fixed implements, bands, bodyweight, or a
+ * load the current gear can no longer build.
+ */
+export function loadBuild(options: LoadOption[], mode: LoadMode, grams: number): SidePlates[] | null {
+  const match = options.find((o) => o.kind === 'dumbbell' && o.mode === mode && o.grams === grams)
+  return match ? match.dumbbells : null
+}
+
 export function loadSteps(options: LoadOption[], mode: LoadMode): number[] {
   return [...new Set(options.filter((o) => o.mode === mode).map((o) => o.grams))].sort((a, b) => a - b)
 }

@@ -1,7 +1,7 @@
 // Run: npm test   (Node's built-in test runner; Node 24 runs .ts directly)
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildableLoads, loadSteps, nextLoadDown, nextLoadUp, type Equipment } from '../shared/utils/loads.ts'
+import { buildableLoads, loadBuild, loadSteps, nextLoadDown, nextLoadUp, type Equipment } from '../shared/utils/loads.ts'
 
 // Kilian's real gear (01 Specs & Features/Starter program + equipment).
 // Handle weight still unknown -> 0 here, a real weight in its own test.
@@ -114,4 +114,20 @@ test('a big plate collection stays fast (no combinatorial blow-up)', () => {
   const options = buildableLoads({ handles: { count: 2, grams: 2000 }, plates, fixed: [] })
   assert.ok(performance.now() - start < 500, 'took longer than 500 ms')
   for (const o of options) for (const side of o.dumbbells) assert.equal(2000 + 2 * sum(side), o.grams)
+})
+
+test('loadBuild gives the plates on each end of each dumbbell for a picked load', () => {
+  const options = buildableLoads(kilian(1850))
+  // 3.85 kg per hand = handle 1.85 + 1 kg on each end, both dumbbells.
+  assert.deepEqual(loadBuild(options, 'pair', 3850), [[1000], [1000]])
+  // Handle only: no plates on either end.
+  assert.deepEqual(loadBuild(options, 'pair', 1850), [[], []])
+  // One dumbbell: 2 kg a side is 5.85 kg.
+  assert.deepEqual(loadBuild(options, 'single', 3850), [[1000]])
+})
+
+test('loadBuild is null for a fixed weight and for a load the gear cannot build', () => {
+  const options = buildableLoads(kilian(1850))
+  assert.equal(loadBuild(options, 'single', 5000), null) // the weight ball
+  assert.equal(loadBuild(options, 'pair', 4000), null) // not buildable
 })

@@ -433,7 +433,7 @@ const workoutStates: { key: WorkoutStateKey; label: string }[] = [
                 <UiExerciseRow name="Push-up" detail="3 × 6–12" value="Bodyweight" />
                 <UiExerciseRow name="One-arm row" detail="3 × 10 per side" value="7.85 kg" />
                 <UiExerciseRow name="Band pull-apart" detail="3 × 15" value="Orange band" />
-                <UiExerciseRow name="Overhead press" detail="3 × 10" value="2 × 3.85 kg" />
+                <UiExerciseRow name="Overhead press" detail="3 × 10" value="3.85 kg per hand" />
                 <UiExerciseRow name="Plank" detail="3 × 20–40 s" />
               </ul>
               <a class="text-link" href="#today-h">Change equipment</a>
