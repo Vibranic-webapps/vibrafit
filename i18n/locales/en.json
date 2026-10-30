@@ -3,6 +3,12 @@
     "name": "Vibrafit",
     "tagline": "Train at home. Stay consistent. Get stronger."
   },
+  "splash": {
+    "sr": "Loading Vibrafit",
+    "chalkUp": "Chalk up…",
+    "wakingUp": "Still waking up…",
+    "retry": "Retry"
+  },
   "tabs": {
     "label": "Main navigation",
     "today": "Today",
