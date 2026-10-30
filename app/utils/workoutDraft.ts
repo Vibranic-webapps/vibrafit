@@ -26,6 +26,8 @@ export interface DraftExercise {
   targetMax: number
   loadGrams: number | null
   loadMode: ProgramExercise['loadMode']
+  /** Optional: drafts saved before the recipe existed don't have it. */
+  build?: ProgramExercise['build']
   why: WhyDto
 }
 
@@ -81,6 +83,7 @@ function toDraftExercise(ex: ProgramExercise, sets: number): DraftExercise {
     targetMax: ex.targetMax,
     loadGrams: ex.loadGrams,
     loadMode: ex.loadMode,
+    build: ex.build ?? null,
     why: ex.why,
   }
 }

@@ -104,6 +104,7 @@ export function useWorkoutRun(clientId: string) {
   }
 
   // --- Rest clock (from timestamps, so a locked screen can't skew it) --------------
+  const autoContinue = useAutoContinue()
   const now = ref(Date.now())
   const rest = computed(() => draft.value?.rest ?? null)
   const restRemaining = computed(() => (rest.value ? Math.max(0, Math.ceil((rest.value.endsAt - now.value) / 1000)) : 0))
@@ -146,6 +147,9 @@ export function useWorkoutRun(clientId: string) {
       if (d && position.value) {
         announce(t('announce.restOver', { n: position.value.setNumber, total: exercise.value?.sets ?? 0 }))
       }
+      // Auto-continue: the rest simply ends and the next set / exercise opens.
+      // (A rest restored after a reload has milestones.over set already, so it never jumps ahead by itself.)
+      if (autoContinue.enabled.value) endRest()
     }
   })
 
@@ -402,6 +406,7 @@ export function useWorkoutRun(clientId: string) {
     logSet,
     restPrimary,
     addRestTime,
+    autoContinue,
     startFix,
     cancelFix,
     skipExercise,

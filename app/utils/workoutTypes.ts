@@ -26,6 +26,8 @@ export interface ProgramExercise {
   targetMax: number
   loadGrams: number | null
   loadMode: 'single' | 'pair' | null
+  /** Plate recipe (grams). Absent in programs cached before this existed. */
+  build?: { handleGrams: number; dumbbells: number[][] } | null
   why: WhyDto
 }
 

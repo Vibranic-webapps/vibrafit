@@ -8,7 +8,7 @@ import type { DraftExercise } from '~/utils/workoutDraft'
 /** The fields of an exercise these helpers need (program rows and draft rows both fit). */
 export type ExerciseLike = Pick<
   DraftExercise,
-  'nameKey' | 'slug' | 'measure' | 'perSide' | 'loadType' | 'loadGrams' | 'targetMin' | 'targetMax' | 'sets' | 'why' | 'cueKey'
+  'nameKey' | 'slug' | 'measure' | 'perSide' | 'loadType' | 'loadGrams' | 'targetMin' | 'targetMax' | 'sets' | 'why' | 'cueKey' | 'build'
 >
 
 export function useWorkoutText() {
@@ -27,12 +27,36 @@ export function useWorkoutText() {
     return ex.cueKey && te(ex.cueKey) ? t(ex.cueKey) : ''
   }
 
-  /** "7.85 kg", "2 x 3.85 kg" (a pair), "Band", "Bodyweight". */
+  /** "7.85 kg", "3.85 kg per hand" (a pair of dumbbells), "Band", "Bodyweight". */
   function load(ex: Pick<ExerciseLike, 'loadType' | 'loadGrams'>): string {
     if (ex.loadType === 'band') return t('workout.loadBand')
     if (ex.loadGrams === null) return t('workout.loadBodyweight')
     const kg = t('equipment.loads.kg', { kg: gramsToKg(ex.loadGrams) })
-    return ex.loadType === 'pair' ? `2 × ${kg}` : kg
+    return ex.loadType === 'pair' ? t('workout.loadPerHand', { load: kg }) : kg
+  }
+
+  /** "1 kg" or "2 kg + 1 kg": the plates on one end of a dumbbell. */
+  function plates(grams: number[]): string {
+    return grams.map((g) => t('equipment.loads.kg', { kg: gramsToKg(g) })).join(' + ')
+  }
+
+  /**
+   * How to build the dumbbell(s), in plain words: "Each dumbbell: handle + 1 kg
+   * on each end." Empty when there is nothing to build (band, bodyweight, a
+   * fixed weight, or a program saved before the recipe existed).
+   */
+  function recipe(ex: Pick<ExerciseLike, 'build' | 'loadType'>): string {
+    const dumbbells = ex.build?.dumbbells
+    if (!dumbbells?.length) return ''
+    const one = (sides: number[], withNumber?: number): string => {
+      const key = sides.length ? 'plates' : 'bare'
+      const base = withNumber ? `workout.recipe.numbered.${key}` : `workout.recipe.${ex.loadType === 'pair' ? 'each' : 'single'}.${key}`
+      return t(base, { plates: plates(sides), n: withNumber ?? 0 })
+    }
+    if (dumbbells.length === 1) return one(dumbbells[0]!)
+    const [a, b] = dumbbells as [number[], number[]]
+    if (plates(a) === plates(b)) return one(a)
+    return `${one(a, 1)} ${one(b, 2)}`
   }
 
   /** The "Aim for ..." line (the target and the load). */
@@ -73,5 +97,5 @@ export function useWorkoutText() {
     return parts.join(' ')
   }
 
-  return { range, name, cue, load, aim, why, detail, spokenTime }
+  return { range, name, cue, load, recipe, aim, why, detail, spokenTime }
 }

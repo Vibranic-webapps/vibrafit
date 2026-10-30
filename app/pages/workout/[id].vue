@@ -37,6 +37,7 @@ const {
   logSet,
   restPrimary,
   addRestTime,
+  autoContinue,
   startFix,
   cancelFix,
   skipExercise,
@@ -188,6 +189,8 @@ function painFromSheet() {
         :next-detail="restInfo.nextDetail"
         :start-label="restInfo.startLabel"
         @primary="restPrimary"
+        :auto-continue="autoContinue.enabled.value"
+        @toggle-auto="autoContinue.toggle"
         @add15="addRestTime"
         @fix="startFix"
       />

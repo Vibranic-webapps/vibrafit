@@ -5,6 +5,7 @@ import { apiError } from './errors'
 import { explainStoredPick, generateProgram, shortVersion, type Why } from './program'
 import { EXERCISES, exerciseKey } from '../data/exercises'
 import { STARTER_PROGRAM } from '../data/program'
+import { buildableLoads, loadBuild } from '~~/shared/utils/loads'
 
 // Program storage: read the user's program, or (re)generate it from their gear.
 // The rules live in server/utils/program.ts and the data in server/data/*;
@@ -25,6 +26,12 @@ export interface ProgramExerciseDto {
   targetMax: number
   loadGrams: number | null
   loadMode: 'single' | 'pair' | null
+  /**
+   * How to build the load: handle weight plus the plates on ONE side of each
+   * dumbbell (grams, heaviest first). null for bands, bodyweight and fixed
+   * weights. Worked out on read from the user's current gear, not stored.
+   */
+  build: { handleGrams: number; dumbbells: number[][] } | null
   why: Why
 }
 
@@ -43,8 +50,14 @@ export async function getProgram(userId: string): Promise<ProgramDto> {
     orderBy: { order: 'asc' },
     include: { exercises: { orderBy: { order: 'asc' }, include: { exercise: true } } },
   })
+  const equipment = await getEquipment(userId)
+  const options = buildableLoads(equipment)
   return {
     days: days.map((day) => {
+      const buildOf = (grams: number | null, mode: 'single' | 'pair' | null): ProgramExerciseDto['build'] => {
+        const sides = grams !== null && mode ? loadBuild(options, mode, grams) : null
+        return sides ? { handleGrams: equipment.handles.grams, dumbbells: sides } : null
+      }
       const exercises: ProgramExerciseDto[] = day.exercises.map((row) => ({
         id: row.id,
         order: row.order,
@@ -59,6 +72,7 @@ export async function getProgram(userId: string): Promise<ProgramDto> {
         targetMax: row.targetMax,
         loadGrams: row.loadGrams,
         loadMode: row.loadMode,
+        build: buildOf(row.loadGrams, row.loadMode),
         why: explainStoredPick(STARTER_PROGRAM, EXERCISES, {
           dayKey: day.key,
           order: row.order,

@@ -119,6 +119,21 @@
     "aimPerSideBodyweight": "Aim for {range} good reps per side.",
     "aimSeconds": "Aim for {range} seconds.",
     "aimBand": "Aim for {range} with your band.",
+    "loadPerHand": "{load} per hand",
+    "recipe": {
+      "each": {
+        "plates": "Each dumbbell: handle + {plates} on each end.",
+        "bare": "Each dumbbell: handle only, no plates."
+      },
+      "single": {
+        "plates": "Handle + {plates} on each end.",
+        "bare": "Handle only, no plates."
+      },
+      "numbered": {
+        "plates": "Dumbbell {n}: handle + {plates} on each end.",
+        "bare": "Dumbbell {n}: handle only."
+      }
+    },
     "loadBand": "Band",
     "loadBodyweight": "Bodyweight",
     "repsUnit": "reps",
@@ -136,6 +151,9 @@
     "restOver": "Rest over",
     "add15": "+15 s",
     "skipRest": "Skip rest",
+    "autoContinue": "Auto-continue",
+    "autoOn": "on",
+    "autoOff": "off",
     "startSet": "Start set {n}",
     "startNextExercise": "Start next exercise",
     "loggedLine": "Set {n}: {reps} reps logged.",

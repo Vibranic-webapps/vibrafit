@@ -30,6 +30,7 @@ const subline = computed(() => {
   if (props.exercise.perSide) return t('workout.perSideHint', { n: text.range(props.exercise) })
   return ''
 })
+const recipe = computed(() => text.recipe(props.exercise))
 const whyLine = computed(() => (props.exercise.measure === 'seconds' ? t('workout.holdWhy') : text.why(props.exercise)))
 
 function boxState(n: number): SetState {
@@ -45,6 +46,8 @@ function boxState(n: number): SetState {
       <!-- Focus lands here when the step changes, so screen readers start at the exercise. -->
       <h1 class="vf-display wk-head__title" tabindex="-1" data-wk-focus>{{ text.name(exercise) }}</h1>
       <p v-if="subline" class="vf-muted wk-head__sub">{{ subline }}</p>
+      <!-- Plain recipe for the dumbbells, so "3.85 kg per hand" is never a puzzle. -->
+      <p v-if="recipe" class="wk-head__recipe">{{ recipe }}</p>
       <template v-if="cue">
         <button type="button" class="wk-head__cue-toggle" :aria-expanded="cueOpen" @click="cueOpen = !cueOpen">
           {{ cueOpen ? t('workout.cueHide') : t('workout.cueShow') }}
@@ -80,6 +83,12 @@ function boxState(n: number): SetState {
 .wk-head__sub {
   margin-top: var(--vf-space-1);
   font-size: var(--vf-text-sm);
+}
+
+.wk-head__recipe {
+  margin-top: var(--vf-space-1);
+  font-size: var(--vf-text-sm);
+  font-weight: var(--vf-weight-semibold);
 }
 
 .wk-head__cue-toggle {
