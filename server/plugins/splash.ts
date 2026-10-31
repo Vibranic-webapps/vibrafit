@@ -22,7 +22,13 @@ async function buildSplash(): Promise<string> {
 }
 
 export default defineNitroPlugin((nitro) => {
-  nitro.hooks.hook('render:html', async (html) => {
+  nitro.hooks.hook('render:html', async (html, { event }) => {
     html.bodyPrepend.unshift(await buildSplash())
+
+    // The page is not server-rendered, so app.vue can't put data-theme on <html> before
+    // JavaScript runs. Do it here from the same cookie, or the splash would flash the
+    // phone's theme instead of the one picked in the app. 'system' = no attribute.
+    const theme = getCookie(event, 'vf-theme')
+    if (theme === 'light' || theme === 'dark') html.htmlAttrs.push(`data-theme="${theme}"`)
   })
 })

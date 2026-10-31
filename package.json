@@ -6,6 +6,7 @@
     "dev": "nuxt dev",
     "build": "prisma generate && nuxt build",
     "preview": "nuxt preview",
+    "launch-images": "node config/launch-images.mjs",
     "postinstall": "prisma generate && nuxt prepare",
     "typecheck": "nuxt typecheck",
     "test": "node --test \"tests/**/*.test.ts\"",
