@@ -9,7 +9,7 @@
 #vbs{--bg:#F1F3F2;--text:#111513;--muted:#505955;--accent:#F04E12;--border:#D5DAD7;--track:#EAEEEB;--edge:#7A847F;
 --ease:cubic-bezier(.2,.8,.2,1);--u:calc(min(100vw,100vh*.9,430px)/360);
 --font:'Barlow Condensed','HelveticaNeue-CondensedBold','Arial Narrow','Roboto Condensed',sans-serif-condensed,sans-serif;
-position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);opacity:1;transition:opacity .24s linear}
+position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);overflow:hidden;opacity:1;transition:opacity .24s linear}
 html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:#FF6A33;--border:#2A302D;--track:#262C29;--edge:#6B7570}
 @media (prefers-color-scheme:dark){html:not([data-theme]) #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:#FF6A33;--border:#2A302D;--track:#262C29;--edge:#6B7570}}
 #vbs[hidden]{display:none}
@@ -33,6 +33,16 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 #vbs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #vbs .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #vbs.stalled b,#vbs.ready b{animation:none}
+/* Exit: 12 orange columns (the 12 segments, grown up) sweep up from the bottom, left to right. While they cover the whole
+   screen (at 375 ms) the splash itself disappears underneath, then they carry on upward and reveal the app. */
+#vbs .wipe{position:absolute;inset:0;display:flex;pointer-events:none}
+#vbs .wipe i{flex:1;background:var(--accent);transform:translateY(101%)}
+#vbs.go .wipe i{animation:vbs-wipe 560ms linear calc(var(--i)*12ms) both;will-change:transform}
+#vbs.go{animation:vbs-clear 1ms linear 375ms both}
+#vbs.go .c{animation:vbs-gone 1ms linear 375ms both}
+@keyframes vbs-wipe{0%{transform:translateY(101%);animation-timing-function:cubic-bezier(.2,.8,.2,1)}38%,72%{transform:none;animation-timing-function:cubic-bezier(.6,0,.9,.4)}100%{transform:translateY(-101%)}}
+@keyframes vbs-clear{to{background-color:transparent}}
+@keyframes vbs-gone{to{visibility:hidden}}
 @keyframes vbs-tick{from{transform:none}to{transform:translateY(-99.0099%)}}
 @keyframes vbs-fill{from{transform:scaleX(0)}to{transform:none}}
 @keyframes vbs-wave{0%,100%{opacity:1}40%{opacity:.45}}
@@ -56,6 +66,7 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 <svg class="wm" viewBox="0 0 150 38" aria-hidden="true"><text x="0" y="30" textLength="150" lengthAdjust="spacingAndGlyphs">VIBRAFIT</text><rect y="35" width="150" height="2"/></svg>
 <div class="st"><p class="msg"></p><button type="button" hidden>{{retry}}</button></div>
 </div>
+<div class="wipe" aria-hidden="true"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i></div>
 <noscript><style>#vbs{display:none}</style></noscript>
 <script>
 (function(){
@@ -65,7 +76,7 @@ reduce=w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches,
 timers=[],finished=false,
 // The intro (counter 0 to 100, 12 segments) ends at 1.3 s. Hold until then so the last frame is seen, then fade.
 // Reduced motion shows only the final frame, so there is nothing to wait for.
-MIN=reduce?600:1500,FADE=240;
+MIN=reduce?600:1500,FADE=240,WIPE=560+11*12;
 function later(fn,ms){timers.push(setTimeout(fn,ms))}
 // 4 s: slow state (text only, the idle wave keeps going).
 later(function(){msg.textContent=root.getAttribute('data-slow')},4000);
@@ -77,8 +88,10 @@ w.__vbs={readyAt:null,done:function(){
  w.__vbs.readyAt=Math.round(performance.now());
  var elapsed=performance.now()-t0;
  later(function(){
-  root.classList.add('ready','out');
-  later(function(){timers.forEach(clearTimeout);root.hidden=true},FADE+20);
+  // Reduced motion: plain quick fade. Otherwise the orange columns sweep up and reveal the app.
+  root.classList.add('ready');
+  if(reduce){root.classList.add('out')}else{root.classList.add('go')}
+  later(function(){timers.forEach(clearTimeout);root.hidden=true},(reduce?FADE:WIPE)+40);
  },Math.max(0,MIN-elapsed));
 }};
 })();
