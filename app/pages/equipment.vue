@@ -230,10 +230,7 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
     <p class="vf-muted eq__intro">{{ t('equipment.intro') }}</p>
 
     <!-- Loading ------------------------------------------------------------>
-    <div v-if="loadState === 'loading'" class="eq__stack" role="status" :aria-label="t('equipment.loading')">
-      <div v-for="n in 3" :key="n" class="eq__skeleton" aria-hidden="true" />
-      <span class="vf-visually-hidden">{{ t('equipment.loading') }}</span>
-    </div>
+    <EquipmentSkeleton v-if="loadState === 'loading'" />
 
     <!-- Load error ----------------------------------------------------------->
     <UiCard v-else-if="loadState === 'error'">
@@ -242,7 +239,7 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
     </UiCard>
 
     <!-- Form + live panel -------------------------------------------------------->
-    <form v-else ref="formEl" class="eq__stack" novalidate @submit.prevent="save">
+    <form v-else ref="formEl" class="eq__stack vf-reveal" novalidate @submit.prevent="save">
       <!-- Handles -->
       <UiCard>
         <h2 class="vf-label eq__section-label">{{ t('equipment.handles.title') }}</h2>
@@ -406,12 +403,6 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
   display: flex;
   flex-direction: column;
   gap: var(--vf-space-4);
-}
-
-.eq__skeleton {
-  height: calc(var(--vf-space-16) * 2);
-  border-radius: var(--vf-radius);
-  background: var(--vf-color-chip-bg);
 }
 
 .eq__section-label {

@@ -143,6 +143,7 @@ onBeforeUnmount(() => {
 })
 
 const sheetDemo = ref(false)
+const skeletonLoaded = ref(false)
 const painSheet = ref(false)
 const leaveSheet = ref(false)
 
@@ -387,9 +388,55 @@ const workoutStates: { key: WorkoutStateKey; label: string }[] = [
         <UiButton variant="primary" full-width @click="sheetDemo = false">Keep going</UiButton>
         <UiButton variant="secondary" full-width @click="sheetDemo = false">Leave and resume later</UiButton>
       </UiSheet>
+
+      <h3 class="guide__h3">UiSkeleton</h3>
+      <p class="vf-muted">
+        Loading placeholders: flat track fill, hairline border, a slow orange sweep (<code>--vf-color-skeleton-sweep</code>,
+        <code>--vf-duration-shimmer</code>). Shapes: line, chip, block, circle. Size each one to the content it stands in for.
+        Reduced motion stops the sweep.
+      </p>
+      <div class="guide__row">
+        <UiSkeleton shape="line" width="120px" height="14px" />
+        <UiSkeleton shape="chip" width="64px" height="24px" :index="1" />
+        <UiSkeleton shape="block" width="120px" height="var(--vf-tap-min)" :index="2" />
+        <UiSkeleton shape="circle" width="var(--vf-size-dot-md)" :index="3" />
+      </div>
+      <div class="demo-switch" role="group" aria-label="Skeleton state">
+        <button type="button" class="demo-switch__btn" :aria-pressed="!skeletonLoaded" @click="skeletonLoaded = false">Loading</button>
+        <button type="button" class="demo-switch__btn" :aria-pressed="skeletonLoaded" @click="skeletonLoaded = true">Loaded</button>
+      </div>
+      <p class="vf-muted">Each pair shares one grid cell, so the swap cannot move anything.</p>
+      <div class="guide__stack">
+        <div class="sk-demo" :class="{ 'sk-demo--loaded': skeletonLoaded }" data-pair="week">
+          <ol class="sk-demo__sk sk-demo__week" aria-hidden="true">
+            <li v-for="n in 7" :key="n" class="sk-demo__day">
+              <span class="sk-demo__label"><UiSkeleton width="20px" height="10px" :index="n" /></span>
+              <UiSkeleton shape="chip" width="var(--vf-size-dot-md)" height="var(--vf-size-dot-md)" :index="n" />
+            </li>
+          </ol>
+          <div class="sk-demo__real"><UiWeekStrip :days="weekDemo" /></div>
+        </div>
+
+        <div class="sk-demo" :class="{ 'sk-demo--loaded': skeletonLoaded }" data-pair="ring">
+          <div class="sk-demo__sk sk-demo__ring" aria-hidden="true">
+            <UiSkeleton shape="circle" width="112px" height="112px" />
+            <div class="sk-demo__ring-text">
+              <UiSkeleton width="72%" height="18px" :index="2" />
+              <UiSkeleton width="52%" height="12px" :index="3" />
+            </div>
+          </div>
+          <div class="sk-demo__real sk-demo__ring">
+            <UiGoalRing :done="2" :target="3" />
+            <div>
+              <p class="goal-row__title">One more to hit your goal</p>
+              <p class="vf-muted goal-row__meta">Goal: 3 workouts a week</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ============================== SAMPLE: TODAY ============================== -->
+<!-- ============================== SAMPLE: TODAY ============================== -->
     <section class="guide__section" aria-labelledby="today-h">
       <h2 id="today-h" class="vf-display guide__h2">Sample: Today (360 px, every state)</h2>
       <div class="demo-switch" role="group" aria-label="Today state">
@@ -1107,5 +1154,54 @@ const workoutStates: { key: WorkoutStateKey; label: string }[] = [
 
 .sheet-note {
   font-size: var(--vf-text-sm);
+}
+
+/* UiSkeleton demo: skeleton + real content share one grid cell. */
+.sk-demo {
+  display: grid;
+}
+.sk-demo > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+.sk-demo__real {
+  opacity: 0;
+}
+.sk-demo--loaded .sk-demo__real {
+  opacity: 1;
+  animation: vf-reveal var(--vf-duration-slow) var(--vf-ease) both;
+}
+.sk-demo--loaded .sk-demo__sk {
+  opacity: 0;
+}
+.sk-demo__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--vf-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sk-demo__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--vf-space-2);
+}
+.sk-demo__label {
+  display: flex;
+  align-items: center;
+  height: calc(var(--vf-text-xs) * var(--vf-leading-normal));
+}
+.sk-demo__ring {
+  display: flex;
+  align-items: center;
+  gap: var(--vf-space-4);
+}
+.sk-demo__ring-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vf-space-2);
 }
 </style>
