@@ -1,74 +1,86 @@
-<!-- Loading splash. Strings in {{...}} come from i18n/locales/en.json (splash.*), filled in by server/plugins/splash.ts.
-     Lives OUTSIDE #__nuxt so hydration never touches it. Colours are deliberately theme-independent:
-     the videos have a flat #F5F0E1 background and a dark outline, so the splash stays light in dark mode too. -->
+<!-- Loading splash ("Progress segments", picked 2026-10-31). Pure CSS + inline SVG: no video, no images, no fonts to download.
+     Strings in {{...}} come from i18n/locales/en.json (splash.*), filled in by server/plugins/splash.ts.
+     Lives OUTSIDE #__nuxt so hydration never touches it. Colours are copies of the --vf-* tokens in app/assets/css/main.css
+     (the app CSS isn't loaded yet when this paints), so change them in both places.
+     Light/dark: data-theme on <html> (set from the vf-theme cookie) wins, otherwise the phone's setting.
+     Preview + spec: vault > vibrafit > 03 Design > loading-screens > preview-vibrafit-v2.html -->
 <div id="vbs" role="status" aria-live="polite" data-slow="{{wakingUp}}">
 <style>
-#vbs{--bg:#F5F0E1;--ink:#17201C;--signal:#FF6A33;position:fixed;inset:0;z-index:2147483000;background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .24s linear}
+#vbs{--bg:#F1F3F2;--text:#111513;--muted:#505955;--accent:#F04E12;--border:#D5DAD7;--track:#EAEEEB;--edge:#7A847F;
+--ease:cubic-bezier(.2,.8,.2,1);--u:calc(min(100vw,100vh*.9,430px)/360);
+--font:'Barlow Condensed','HelveticaNeue-CondensedBold','Arial Narrow','Roboto Condensed',sans-serif-condensed,sans-serif;
+position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);opacity:1;transition:opacity .24s linear}
+html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:#FF6A33;--border:#2A302D;--track:#262C29;--edge:#6B7570}
+@media (prefers-color-scheme:dark){html:not([data-theme]) #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:#FF6A33;--border:#2A302D;--track:#262C29;--edge:#6B7570}}
 #vbs[hidden]{display:none}
 #vbs.out{opacity:0;pointer-events:none}
-#vbs .c{display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px;opacity:0;animation:vbs-in .15s linear forwards}
-#vbs .box{position:relative;width:min(78vw,360px);aspect-ratio:1;-webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);mask-composite:intersect}
-#vbs video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--bg);pointer-events:none}
-#vbs .rest{opacity:0;transition:opacity .3s linear}
-#vbs.slow .rest{opacity:1}
-#vbs .name{margin:0;font:800 clamp(28px,9vw,40px)/1 'Barlow Condensed','Arial Narrow','Roboto Condensed',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--signal)}
-#vbs .msg{margin:0;font:500 16px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;color:#4A524E;text-align:center}
-#vbs button{min-height:44px;min-width:44px;padding:0 24px;font:600 16px system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:8px;cursor:pointer}
-#vbs button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+#vbs .c{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*20)}
+#vbs .n{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*6)}
+#vbs .lbl{font:600 14px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#vbs .cnt{width:calc(var(--u)*150);height:calc(var(--u)*112);overflow:hidden}
+#vbs .cnt ol{margin:0;padding:0;list-style:none;text-align:center;font:800 calc(var(--u)*112)/calc(var(--u)*112) var(--font);font-variant-numeric:tabular-nums;transform:translateY(-92.3077%)}
+#vbs .cnt li{margin:0;padding:0;height:calc(var(--u)*112)}
+#vbs .sg{display:flex;gap:calc(var(--u)*3);width:calc(var(--u)*296)}
+#vbs .sg i{position:relative;display:block;flex:1;height:calc(var(--u)*14);overflow:hidden;box-sizing:border-box;border:1px solid var(--border);background:var(--track)}
+#vbs .sg b,#vbs .sg s{position:absolute;inset:0;display:block;text-decoration:none}
+#vbs .sg s{background:var(--accent);transform-origin:left}
+#vbs .wm{display:block;width:calc(var(--u)*200);height:auto;overflow:visible}
+#vbs .wm text{font:800 40px var(--font);fill:currentColor}
+#vbs .wm rect{fill:var(--accent)}
+#vbs .st{display:flex;flex-direction:column;align-items:center;gap:16px;height:88px}
+#vbs .msg{margin:0;font:500 16px/24px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--muted);text-align:center}
+#vbs button{min-width:48px;min-height:48px;padding:0 24px;font:600 18px/1 var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--text);background:transparent;border:1.5px solid var(--edge);border-radius:6px;cursor:pointer}
 #vbs button[hidden]{display:none}
+#vbs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #vbs .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-@keyframes vbs-in{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){#vbs,#vbs .rest{transition:none}#vbs .c{animation-duration:0s}}
+#vbs.stalled b,#vbs.ready b{animation:none}
+@keyframes vbs-tick{from{transform:none}to{transform:translateY(-92.3077%)}}
+@keyframes vbs-fill{from{transform:scaleX(0)}to{transform:none}}
+@keyframes vbs-wave{0%,100%{opacity:1}40%{opacity:.45}}
+@media (prefers-reduced-motion:no-preference){
+#vbs .cnt ol{animation:vbs-tick 1.2s steps(12,end) .1s both}
+#vbs .sg s{animation:vbs-fill 100ms var(--ease) calc(.1s + var(--i)*100ms) both}
+#vbs .sg b{animation:vbs-wave 1.8s ease-in-out calc(1.6s + var(--i)*90ms) infinite both}
+}
+@media (prefers-reduced-motion:reduce){#vbs{transition:none}}
 </style>
 <div class="c">
 <span class="sr">{{sr}}</span>
-<div class="box" aria-hidden="true">
-<video class="lift" muted playsinline loop preload="auto" poster="/splash/lift-poster.jpg"></video>
-<video class="rest" muted playsinline loop preload="none"></video>
+<div class="n" aria-hidden="true">
+<span class="lbl">{{reps}}</span>
+<div class="cnt"><ol><li>0</li><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li><li>6</li><li>7</li><li>8</li><li>9</li><li>10</li><li>11</li><li>12</li></ol></div>
 </div>
-<p class="name" aria-hidden="true">VIBRAFIT</p>
-<p class="msg">{{chalkUp}}</p>
-<button type="button" hidden>{{retry}}</button>
+<div class="sg" aria-hidden="true">
+<i style="--i:0"><b><s></s></b></i><i style="--i:1"><b><s></s></b></i><i style="--i:2"><b><s></s></b></i><i style="--i:3"><b><s></s></b></i>
+<i style="--i:4"><b><s></s></b></i><i style="--i:5"><b><s></s></b></i><i style="--i:6"><b><s></s></b></i><i style="--i:7"><b><s></s></b></i>
+<i style="--i:8"><b><s></s></b></i><i style="--i:9"><b><s></s></b></i><i style="--i:10"><b><s></s></b></i><i style="--i:11"><b><s></s></b></i>
+</div>
+<svg class="wm" viewBox="0 0 150 38" aria-hidden="true"><text x="0" y="30" textLength="150" lengthAdjust="spacingAndGlyphs">VIBRAFIT</text><rect y="35" width="150" height="2"/></svg>
+<div class="st"><p class="msg">{{chalkUp}}</p><button type="button" hidden>{{retry}}</button></div>
 </div>
 <noscript><style>#vbs{display:none}</style></noscript>
 <script>
 (function(){
-var d=document,w=window,t0=performance.now(),root=d.getElementById('vbs'),c=root.querySelector('.c'),
-lift=root.querySelector('.lift'),rest=root.querySelector('.rest'),msg=root.querySelector('.msg'),btn=root.querySelector('button'),
-reduce=w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches,timers=[],finished=false,
-MIN=1500,FADE=240,seen=false;
-try{seen=sessionStorage.getItem('vbs-seen')==='1'}catch(e){}
-// Already shown this session (reload, new route in the same tab): skip it before the first paint.
-if(seen){root.hidden=true;w.__vbs={readyAt:null,done:function(){}};return}
+var d=document,w=window,t0=performance.now(),root=d.getElementById('vbs'),
+msg=root.querySelector('.msg'),btn=root.querySelector('button'),
+reduce=w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches,
+timers=[],finished=false,
+// The intro (counter 0 to 12, 12 segments) ends at 1.3 s. Hold until then so the last frame is seen, then fade.
+// Reduced motion shows only the final frame, so there is nothing to wait for.
+MIN=reduce?600:1500,FADE=240;
 function later(fn,ms){timers.push(setTimeout(fn,ms))}
-function stop(v){try{v.pause()}catch(e){}v.removeAttribute('src');v.load()}
-// Reduced motion: the poster stays as a static picture, no video is requested.
-if(!reduce){
- lift.src='/splash/lift.mp4';
- var p=lift.play();if(p&&p.catch)p.catch(function(){}); // autoplay may be blocked: the poster just stays
-}
-// 4 s: slow state. rest.mp4 is only requested here.
-later(function(){
- msg.textContent=root.getAttribute('data-slow');
- if(reduce)return;
- rest.poster="/splash/rest-poster.jpg";rest.src="/splash/rest.mp4";
- var p=rest.play();if(p&&p.catch)p.catch(function(){});
- root.classList.add('slow');
- later(function(){try{lift.pause()}catch(e){}},300);
-},4000);
-// 8 s: Retry becomes visible (and focusable).
-later(function(){btn.hidden=false},8000);
+// 4 s: slow state (text only, the idle wave keeps going).
+later(function(){msg.textContent=root.getAttribute('data-slow')},4000);
+// 8 s: Retry becomes visible and focusable, the idle wave stops so "stalled" is visible too.
+later(function(){btn.hidden=false;root.classList.add('stalled')},8000);
 btn.addEventListener('click',function(){location.reload()});
 w.__vbs={readyAt:null,done:function(){
  if(finished)return;finished=true;
  w.__vbs.readyAt=Math.round(performance.now());
- try{sessionStorage.setItem('vbs-seen','1')}catch(e){}
- // Keep the contents on screen for at least MIN ms so the animation is seen.
  var elapsed=performance.now()-t0;
- function clear(){timers.forEach(clearTimeout);stop(lift);stop(rest);root.hidden=true;while(c.firstChild)c.removeChild(c.firstChild)}
  later(function(){
-  root.classList.add('out');
-  later(clear,FADE+20);
+  root.classList.add('ready','out');
+  later(function(){timers.forEach(clearTimeout);root.hidden=true},FADE+20);
  },Math.max(0,MIN-elapsed));
 }};
 })();
