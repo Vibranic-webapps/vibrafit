@@ -33,16 +33,17 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 #vbs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #vbs .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #vbs.stalled b,#vbs.ready b{animation:none}
-/* Exit: 12 orange columns (the 12 segments, grown up) sweep up from the bottom, left to right. While they cover the whole
-   screen (at 375 ms) the splash itself disappears underneath, then they carry on upward and reveal the app. */
+/* Exit, two phases driven by events (not timers or animated colours, so a busy phone can't skip the cover phase):
+   1. 12 orange columns (the 12 segments, grown up) rise from the bottom until they cover the whole screen.
+   2. When the last one has landed (.cover) the splash itself is hidden underneath, then (.open) the columns carry on upward and reveal the app. */
 #vbs .wipe{position:absolute;inset:0;display:flex;pointer-events:none}
-#vbs .wipe i{flex:1;background:var(--accent);transform:translateY(101%)}
-#vbs.go .wipe i{animation:vbs-wipe 560ms linear calc(var(--i)*12ms) both;will-change:transform}
-#vbs.go{animation:vbs-clear 1ms linear 375ms both}
-#vbs.go .c{animation:vbs-gone 1ms linear 375ms both}
-@keyframes vbs-wipe{0%{transform:translateY(101%);animation-timing-function:cubic-bezier(.2,.8,.2,1)}38%,72%{transform:none;animation-timing-function:cubic-bezier(.6,0,.9,.4)}100%{transform:translateY(-101%)}}
-@keyframes vbs-clear{to{background-color:transparent}}
-@keyframes vbs-gone{to{visibility:hidden}}
+#vbs .wipe i{flex:1;background:var(--accent);transform:translateY(101%);will-change:transform}
+#vbs.go .wipe i{animation:vbs-in 300ms cubic-bezier(.2,.8,.2,1) calc(var(--i)*12ms) both}
+#vbs.cover{background:transparent}
+#vbs.cover .c{visibility:hidden}
+#vbs.open .wipe i{animation:vbs-out 280ms cubic-bezier(.6,0,.9,.4) calc(var(--i)*12ms) both}
+@keyframes vbs-in{from{transform:translateY(101%)}to{transform:none}}
+@keyframes vbs-out{from{transform:none}to{transform:translateY(-101%)}}
 @keyframes vbs-tick{from{transform:none}to{transform:translateY(-99.0099%)}}
 @keyframes vbs-fill{from{transform:scaleX(0)}to{transform:none}}
 @keyframes vbs-wave{0%,100%{opacity:1}40%{opacity:.45}}
@@ -76,7 +77,7 @@ reduce=w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches,
 timers=[],finished=false,
 // The intro (counter 0 to 100, 12 segments) ends at 1.3 s. Hold until then so the last frame is seen, then fade.
 // Reduced motion shows only the final frame, so there is nothing to wait for.
-MIN=reduce?600:1500,FADE=240,WIPE=560+11*12;
+MIN=reduce?600:1500,FADE=240,IN=300+11*12,OUT=280+11*12,cols=root.querySelectorAll('.wipe i'),last=cols[cols.length-1];
 function later(fn,ms){timers.push(setTimeout(fn,ms))}
 // 4 s: slow state (text only, the idle wave keeps going).
 later(function(){msg.textContent=root.getAttribute('data-slow')},4000);
@@ -88,10 +89,27 @@ w.__vbs={readyAt:null,done:function(){
  w.__vbs.readyAt=Math.round(performance.now());
  var elapsed=performance.now()-t0;
  later(function(){
-  // Reduced motion: plain quick fade. Otherwise the orange columns sweep up and reveal the app.
+  // Reduced motion: plain quick fade. Otherwise the orange columns cover the screen, then sweep on up and reveal the app.
   root.classList.add('ready');
-  if(reduce){root.classList.add('out')}else{root.classList.add('go')}
-  later(function(){timers.forEach(clearTimeout);root.hidden=true},(reduce?FADE:WIPE)+40);
+  if(reduce){root.classList.add('out');later(hide,FADE+40);return}
+  // Phase 1: columns rise. Phase 2 starts when the last one lands (timer = fallback if the event never comes, e.g. background tab).
+  var opened=false,hidden=false;
+  function hide(){if(hidden)return;hidden=true;timers.forEach(clearTimeout);root.hidden=true}
+  function open(){
+   if(opened)return;opened=true;
+   root.classList.add('cover');
+   // Let the covered frame paint before the columns move on.
+   var go=function(){root.classList.add('open')};
+   if(w.requestAnimationFrame){w.requestAnimationFrame(function(){w.requestAnimationFrame(go)})}else{go()}
+   later(function(){root.classList.add('open')},150);
+   later(hide,OUT+400);
+  }
+  last.addEventListener('animationend',function(e){
+   if(e.animationName==='vbs-in')open();
+   else if(e.animationName==='vbs-out')hide();
+  });
+  root.classList.add('go');
+  later(open,IN+250);
  },Math.max(0,MIN-elapsed));
 }};
 })();
