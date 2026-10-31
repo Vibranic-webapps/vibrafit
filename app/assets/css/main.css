@@ -145,6 +145,7 @@
   --vf-duration-base: 150ms;
   --vf-duration-slow: 180ms;
   --vf-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --vf-ease-mirror: cubic-bezier(0.8, 0, 0.8, 0.2); /* time-mirror of --vf-ease: the splash exit leaves the way it arrived (server/assets/splash.html keeps a copy) */
   --vf-ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot for the "set logged" stamp */
 
   /* ---------------------------------------------------------------------

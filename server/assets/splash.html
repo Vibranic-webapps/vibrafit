@@ -1,13 +1,13 @@
-<!-- Loading splash ("Progress segments", picked 2026-10-31). Pure CSS + inline SVG: no video, no images, no fonts to download.
+<!-- Loading splash ("Progress segments" intro + square-tile exit with a time-based greeting, picked 2026-10-31). Pure CSS + inline SVG: no video, no images, no fonts to download.
      Strings in {{...}} come from i18n/locales/en.json (splash.*), filled in by server/plugins/splash.ts.
      Lives OUTSIDE #__nuxt so hydration never touches it. Colours are copies of the --vf-* tokens in app/assets/css/main.css
      (the app CSS isn't loaded yet when this paints), so change them in both places.
      Light/dark: data-theme on <html> (set from the vf-theme cookie) wins, otherwise the phone's setting.
      Preview + spec: vault > vibrafit > 03 Design > loading-screens > preview-vibrafit-v2.html -->
-<div id="vbs" role="status" aria-live="polite" data-slow="{{wakingUp}}">
+<div id="vbs" role="status" aria-live="polite" data-slow="{{wakingUp}}" data-morning="{{morning}}" data-afternoon="{{afternoon}}" data-evening="{{evening}}">
 <style>
 #vbs{--bg:#F1F3F2;--text:#111513;--muted:#505955;--accent:#F04E12;--border:#D5DAD7;--track:#EAEEEB;--edge:#7A847F;
---ease:cubic-bezier(.2,.8,.2,1);--u:calc(min(100vw,100vh*.9,430px)/360);
+--ink:#111513;--ease:cubic-bezier(.2,.8,.2,1);--ease-m:cubic-bezier(.8,0,.8,.2);--d:240ms;--hold:480ms;--u:calc(min(100vw,100vh*.9,430px)/360);
 --font:'Barlow Condensed','HelveticaNeue-CondensedBold','Arial Narrow','Roboto Condensed',sans-serif-condensed,sans-serif;
 position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);overflow:hidden;opacity:1;transition:opacity .24s linear}
 html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:#FF6A33;--border:#2A302D;--track:#262C29;--edge:#6B7570}
@@ -15,7 +15,7 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 #vbs[hidden]{display:none}
 #vbs.out{opacity:0;pointer-events:none}
 #vbs .c{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*20)}
-#vbs .n{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*6)}
+#vbs .n{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*6)}
 #vbs .cnt{width:calc(var(--u)*260);height:calc(var(--u)*112);overflow:hidden}
 #vbs .cnt ol{margin:0;padding:0;list-style:none;text-align:center;font:800 calc(var(--u)*112)/calc(var(--u)*112) var(--font);font-variant-numeric:tabular-nums;transform:translateY(-99.0099%)}
 #vbs .cnt li{margin:0;padding:0;height:calc(var(--u)*112)}
@@ -33,17 +33,33 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 #vbs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #vbs .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #vbs.stalled b,#vbs.ready b{animation:none}
-/* Exit, two phases driven by events (not timers or animated colours, so a busy phone can't skip the cover phase):
-   1. 12 orange columns (the 12 segments, grown up) rise from the bottom until they cover the whole screen.
-   2. When the last one has landed (.cover) the splash itself is hidden underneath, then (.open) the columns carry on upward and reveal the app. */
-#vbs .wipe{position:absolute;inset:0;display:flex;pointer-events:none}
-#vbs .wipe i{flex:1;background:var(--accent);transform:translateY(101%);will-change:transform}
-#vbs.go .wipe i{animation:vbs-in 300ms cubic-bezier(.2,.8,.2,1) calc(var(--i)*12ms) both}
-#vbs.cover{background:transparent}
-#vbs.cover .c{visibility:hidden}
-#vbs.open .wipe i{animation:vbs-out 280ms cubic-bezier(.6,0,.9,.4) calc(var(--i)*12ms) both}
-@keyframes vbs-in{from{transform:translateY(101%)}to{transform:none}}
-@keyframes vbs-out{from{transform:none}to{transform:translateY(-101%)}}
+/* Exit (phases set on data-phase, chained by animationend with timer fallbacks so a busy phone can run late but never skip the cover):
+   in   = square orange tiles rise on a diagonal wave from the bottom-left until the screen is covered
+   hold = covered, the greeting word sits on the orange (the splash itself is hidden underneath)
+   out  = the same tiles shrink away in the same diagonal order and the app shows through
+   rm   = reduced motion: no tiles, the greeting replaces the counter, then a plain fade */
+#vbs .tiles{position:absolute;inset:0;overflow:hidden;pointer-events:none;visibility:hidden}
+#vbs .tiles i{position:absolute;display:block;background:var(--accent);opacity:0}
+#vbs[data-phase=in] .tiles,#vbs[data-phase=hold] .tiles,#vbs[data-phase=out] .tiles{visibility:visible}
+#vbs[data-phase=in] .tiles i{will-change:transform,opacity;animation:vbs-rise var(--d) var(--ease) var(--dl) both,vbs-fadein calc(var(--d)*.4) linear var(--dl) both}
+#vbs[data-phase=hold] .tiles i{opacity:1}
+#vbs[data-phase=out] .tiles i{opacity:1;will-change:transform;animation:vbs-shrink var(--d) var(--ease-m) var(--dl) both}
+#vbs[data-phase=hold],#vbs[data-phase=out]{background:transparent}
+#vbs[data-phase=hold] .c,#vbs[data-phase=out] .c{visibility:hidden}
+#vbs .greet{position:absolute;inset:0;display:grid;place-items:center;opacity:0;color:var(--ink);pointer-events:none}
+#vbs .greet svg{width:min(86%,560px);height:auto;overflow:visible}
+#vbs .greet text,#vbs .gslot text{font:800 110px var(--font);fill:currentColor}
+#vbs .greet rect{fill:currentColor}
+#vbs[data-phase=hold] .greet{animation:vbs-greet var(--hold) linear both}
+#vbs .gslot{display:none;position:absolute;inset:0;align-items:center;justify-content:center}
+#vbs .gslot svg{width:100%;height:auto;overflow:visible}
+#vbs .gslot rect{fill:var(--accent)}
+#vbs[data-phase=rm] .cnt{display:none}
+#vbs[data-phase=rm] .gslot{display:flex}
+@keyframes vbs-rise{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes vbs-fadein{from{opacity:0}to{opacity:1}}
+@keyframes vbs-shrink{from{transform:scale(1)}to{transform:scale(0)}}
+@keyframes vbs-greet{0%{opacity:0;transform:translateY(16px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}24%{opacity:1;transform:translateY(0)}86%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(0)}}
 @keyframes vbs-tick{from{transform:none}to{transform:translateY(-99.0099%)}}
 @keyframes vbs-fill{from{transform:scaleX(0)}to{transform:none}}
 @keyframes vbs-wave{0%,100%{opacity:1}40%{opacity:.45}}
@@ -52,12 +68,12 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 #vbs .sg s{animation:vbs-fill 100ms var(--ease) calc(.1s + var(--i)*100ms) both}
 #vbs .sg b{animation:vbs-wave 1.8s ease-in-out calc(1.6s + var(--i)*90ms) infinite both}
 }
-@media (prefers-reduced-motion:reduce){#vbs{transition:none}}
 </style>
 <div class="c">
 <span class="sr">{{sr}}</span>
 <div class="n" aria-hidden="true">
 <div class="cnt"><ol><li>0</li><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li><li>6</li><li>7</li><li>8</li><li>9</li><li>10</li><li>11</li><li>12</li><li>13</li><li>14</li><li>15</li><li>16</li><li>17</li><li>18</li><li>19</li><li>20</li><li>21</li><li>22</li><li>23</li><li>24</li><li>25</li><li>26</li><li>27</li><li>28</li><li>29</li><li>30</li><li>31</li><li>32</li><li>33</li><li>34</li><li>35</li><li>36</li><li>37</li><li>38</li><li>39</li><li>40</li><li>41</li><li>42</li><li>43</li><li>44</li><li>45</li><li>46</li><li>47</li><li>48</li><li>49</li><li>50</li><li>51</li><li>52</li><li>53</li><li>54</li><li>55</li><li>56</li><li>57</li><li>58</li><li>59</li><li>60</li><li>61</li><li>62</li><li>63</li><li>64</li><li>65</li><li>66</li><li>67</li><li>68</li><li>69</li><li>70</li><li>71</li><li>72</li><li>73</li><li>74</li><li>75</li><li>76</li><li>77</li><li>78</li><li>79</li><li>80</li><li>81</li><li>82</li><li>83</li><li>84</li><li>85</li><li>86</li><li>87</li><li>88</li><li>89</li><li>90</li><li>91</li><li>92</li><li>93</li><li>94</li><li>95</li><li>96</li><li>97</li><li>98</li><li>99</li><li>100</li></ol></div>
+<div class="gslot"></div>
 </div>
 <div class="sg" aria-hidden="true">
 <i style="--i:0"><b><s></s></b></i><i style="--i:1"><b><s></s></b></i><i style="--i:2"><b><s></s></b></i><i style="--i:3"><b><s></s></b></i>
@@ -67,18 +83,75 @@ html[data-theme=dark] #vbs{--bg:#0E1110;--text:#EEF1EF;--muted:#9BA5A0;--accent:
 <svg class="wm" viewBox="0 0 150 38" aria-hidden="true"><text x="0" y="30" textLength="150" lengthAdjust="spacingAndGlyphs">VIBRAFIT</text><rect y="35" width="150" height="2"/></svg>
 <div class="st"><p class="msg"></p><button type="button" hidden>{{retry}}</button></div>
 </div>
-<div class="wipe" aria-hidden="true"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i></div>
+<div class="tiles" aria-hidden="true"></div>
+<div class="greet" aria-hidden="true"></div>
 <noscript><style>#vbs{display:none}</style></noscript>
 <script>
 (function(){
 var d=document,w=window,t0=performance.now(),root=d.getElementById('vbs'),
-msg=root.querySelector('.msg'),btn=root.querySelector('button'),
+msg=root.querySelector('.msg'),btn=root.querySelector('button'),tiles=root.querySelector('.tiles'),
+greet=root.querySelector('.greet'),gslot=root.querySelector('.gslot'),
 reduce=w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches,
-timers=[],finished=false,
-// The intro (counter 0 to 100, 12 segments) ends at 1.3 s. Hold until then so the last frame is seen, then fade.
+timers=[],finished=false,phase='intro',last=null,
+// The intro (counter 0 to 100, 12 segments) ends at 1.3 s. Hold until then so the last frame is seen, then exit.
 // Reduced motion shows only the final frame, so there is nothing to wait for.
-MIN=reduce?600:1500,FADE=240,IN=300+11*12,OUT=280+11*12,cols=root.querySelectorAll('.wipe i'),last=cols[cols.length-1];
+MIN=reduce?600:1500,FADE=240,
+// Exit tuning: tiles across, whole in (and out) phase, one tile's travel, greeting hold (ms). Same numbers as the design preview.
+COLS=4,IN_TOTAL=440,DUR=240,HOLD=480;
 function later(fn,ms){timers.push(setTimeout(fn,ms))}
+function hide(){timers.forEach(clearTimeout);root.hidden=true}
+// Greeting from the phone clock: MORNING 05-11, AFTERNOON 12-17, EVENING 18-04. Words come from en.json (splash.*).
+function word(){var h=new Date().getHours(),k=h>=5&&h<=11?'morning':h>=12&&h<=17?'afternoon':'evening';return(root.getAttribute('data-'+k)||'').toUpperCase()}
+function svg(text){
+ var ns='http://www.w3.org/2000/svg',W=Math.max(text.length,1)*42,el=d.createElementNS(ns,'svg'),t=d.createElementNS(ns,'text'),r=d.createElementNS(ns,'rect');
+ el.setAttribute('viewBox','0 0 '+W+' 118');el.setAttribute('aria-hidden','true');
+ t.setAttribute('x','0');t.setAttribute('y','92');t.setAttribute('textLength',W);t.setAttribute('lengthAdjust','spacingAndGlyphs');t.textContent=text;
+ r.setAttribute('y','106');r.setAttribute('width',W);r.setAttribute('height','8');
+ el.appendChild(t);el.appendChild(r);return el;
+}
+// Square tiles: whole pixels plus 1 px overlap so no seam can open on fractional widths. Built up front so the exit does no layout work.
+function buildTiles(){
+ var rc=root.getBoundingClientRect(),W=Math.ceil(rc.width),H=Math.ceil(rc.height);
+ if(!W||!H)return;
+ var T=Math.ceil(W/COLS),rows=Math.ceil(H/T),max=COLS-1+rows-1,step=max?(IN_TOTAL-DUR)/max:0,frag=d.createDocumentFragment();
+ tiles.textContent='';last=null;
+ for(var r=0;r<rows;r++)for(var c=0;c<COLS;c++){
+  var el=d.createElement('i'),idx=c+(rows-1-r); // distance from the bottom-left corner
+  el.style.cssText='left:'+(c*T)+'px;top:'+(r*T)+'px;width:'+(T+1)+'px;height:'+(T+1)+'px;--dl:'+(idx*step).toFixed(1)+'ms';
+  if(idx===max)last=el;
+  frag.appendChild(el);
+ }
+ tiles.appendChild(frag);
+}
+if(!reduce){
+ buildTiles();
+ var rt;w.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){if(phase==='intro')buildTiles()},200)});
+}
+// Phase machine. Each step moves on when the previous animation ends; the timer is only a fallback (background tab etc.).
+function to(from,next){
+ if(phase!==from)return;phase=next;root.setAttribute('data-phase',next);
+ if(next==='in')later(function(){to('in','hold')},IN_TOTAL+300);
+ else if(next==='hold')later(function(){to('hold','out')},HOLD+300);
+ else if(next==='out')later(hide,IN_TOTAL+300);
+}
+root.addEventListener('animationend',function(e){
+ var n=e.animationName;
+ if(n==='vbs-rise'&&e.target===last)to('in','hold');
+ else if(n==='vbs-greet')to('hold','out');
+ else if(n==='vbs-shrink'&&e.target===last&&phase==='out')hide();
+});
+function start(){
+ root.classList.add('ready');
+ var text=word();
+ if(reduce){
+  // Reduced motion: the greeting replaces the counter for a moment, then a plain quick fade.
+  gslot.appendChild(svg(text));phase='rm';root.setAttribute('data-phase','rm');
+  later(function(){root.classList.add('out')},700);later(hide,700+FADE+40);return;
+ }
+ if(!last){hide();return}
+ greet.appendChild(svg(text));
+ to('intro','in');
+}
 // 4 s: slow state (text only, the idle wave keeps going).
 later(function(){msg.textContent=root.getAttribute('data-slow')},4000);
 // 8 s: Retry becomes visible and focusable, the idle wave stops so "stalled" is visible too.
@@ -88,29 +161,7 @@ w.__vbs={readyAt:null,done:function(){
  if(finished)return;finished=true;
  w.__vbs.readyAt=Math.round(performance.now());
  var elapsed=performance.now()-t0;
- later(function(){
-  // Reduced motion: plain quick fade. Otherwise the orange columns cover the screen, then sweep on up and reveal the app.
-  root.classList.add('ready');
-  if(reduce){root.classList.add('out');later(hide,FADE+40);return}
-  // Phase 1: columns rise. Phase 2 starts when the last one lands (timer = fallback if the event never comes, e.g. background tab).
-  var opened=false,hidden=false;
-  function hide(){if(hidden)return;hidden=true;timers.forEach(clearTimeout);root.hidden=true}
-  function open(){
-   if(opened)return;opened=true;
-   root.classList.add('cover');
-   // Let the covered frame paint before the columns move on.
-   var go=function(){root.classList.add('open')};
-   if(w.requestAnimationFrame){w.requestAnimationFrame(function(){w.requestAnimationFrame(go)})}else{go()}
-   later(function(){root.classList.add('open')},150);
-   later(hide,OUT+400);
-  }
-  last.addEventListener('animationend',function(e){
-   if(e.animationName==='vbs-in')open();
-   else if(e.animationName==='vbs-out')hide();
-  });
-  root.classList.add('go');
-  later(open,IN+250);
- },Math.max(0,MIN-elapsed));
+ later(start,Math.max(0,MIN-elapsed));
 }};
 })();
 </script>

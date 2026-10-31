@@ -6,7 +6,10 @@
   "splash": {
     "sr": "Loading Vibrafit",
     "wakingUp": "Still waking up…",
-    "retry": "Retry"
+    "retry": "Retry",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening"
   },
   "tabs": {
     "label": "Main navigation",
