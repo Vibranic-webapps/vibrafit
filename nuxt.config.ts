@@ -1,3 +1,5 @@
+import { launchImageLinks } from './config/launch-images.mjs'
+
 export default defineNuxtConfig({
   // Pins the server runtime (Nitro) behaviour. Move it forward deliberately,
   // with testing, never as a side effect of fixing a warning.
@@ -5,6 +7,14 @@ export default defineNuxtConfig({
 
   modules: ['@nuxtjs/i18n'],
   devtools: { enabled: true },
+
+  // App-shell mode: the server sends the same static page (splash + empty app) for every
+  // route and never touches the database before the first byte. Who is signed in is asked
+  // client-side (app/middleware/auth.global.ts) while the splash covers the screen.
+  // Before this, every open waited on Neon (US East, sleeps when idle) = a black screen.
+  // All data lives behind /api/* (each route checks the session itself), so nothing here
+  // needs server-rendered HTML; the app is private and has no SEO pages.
+  ssr: false,
 
   // Own dev port. Browsers key service workers, localStorage and cookies per
   // origin (incl. port), so every Vibranic app gets its own:
@@ -48,6 +58,8 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      // Real <html lang> in the first bytes; the i18n module keeps it in sync after load.
+      htmlAttrs: { lang: 'en' },
       // viewport-fit=cover draws edge to edge; CSS keeps content out of the
       // notch / home indicator with env(safe-area-inset-*).
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
@@ -60,6 +72,9 @@ export default defineNuxtConfig({
         // Browser-tab icon: 32px for normal screens, 192px for sharp (retina) screens.
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
         { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icon-192.png' },
+        // iOS shows one of these instantly when the app is opened from the home screen
+        // (before any code loads). Made by config/launch-images.mjs.
+        ...launchImageLinks(),
       ],
       meta: [
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
