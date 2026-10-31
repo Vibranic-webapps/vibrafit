@@ -117,9 +117,7 @@ function painFromSheet() {
     <p class="vf-visually-hidden" role="status" aria-live="polite">{{ announcement }}</p>
 
     <!-- Loading: top bar and blocks, button area reserved so nothing jumps. -->
-    <div v-if="status === 'loading'" class="wk__skeleton" role="status" :aria-label="t('ui.loading')">
-      <div v-for="n in 4" :key="n" class="wk__skeleton-block" aria-hidden="true" />
-    </div>
+    <WorkoutSkeleton v-if="status === 'loading'" />
 
     <UiCard v-else-if="status === 'notFound'">
       <div class="wk__message">
@@ -230,18 +228,6 @@ function painFromSheet() {
   max-width: var(--vf-width-page);
   margin: 0 auto;
   padding: var(--vf-space-4) var(--vf-space-4) 0;
-}
-
-.wk__skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--vf-space-4);
-}
-
-.wk__skeleton-block {
-  height: calc(var(--vf-space-16) * 2);
-  border-radius: var(--vf-radius);
-  background: var(--vf-color-chip-bg);
 }
 
 .wk__message {

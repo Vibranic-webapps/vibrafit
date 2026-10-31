@@ -254,14 +254,8 @@ async function rebuildProgram() {
 
       <p v-if="finishError" class="today__alert" role="alert">{{ t('today.finishError') }}</p>
 
-      <!-- Loading: header is already there; the hero card is a flat placeholder. -->
-      <UiCard v-if="phase === 'loading'" variant="hero">
-        <div class="today__skeleton" role="status" :aria-label="t('ui.loading')">
-          <div class="today__skeleton-block today__skeleton-block--short" aria-hidden="true" />
-          <div class="today__skeleton-block today__skeleton-block--wide" aria-hidden="true" />
-          <div class="today__skeleton-block today__skeleton-block--button" aria-hidden="true" />
-        </div>
-      </UiCard>
+      <!-- Loading: header is already there; the rest is a same-size placeholder of the ready view. -->
+      <TodaySkeleton v-if="phase === 'loading'" />
 
       <!-- Nothing cached and the server is unreachable. -->
       <UiCard v-else-if="phase === 'error'" variant="hero">
@@ -271,11 +265,12 @@ async function rebuildProgram() {
         </div>
       </UiCard>
 
-      <TodaySetup v-else-if="view === 'noEquipment'" step="equipment" />
-      <TodaySetup v-else-if="view === 'noProgram'" step="program" :loading="building" :error="buildError" @build="build" />
+      <TodaySetup v-else-if="view === 'noEquipment'" class="vf-reveal" step="equipment" />
+      <TodaySetup v-else-if="view === 'noProgram'" class="vf-reveal" step="program" :loading="building" :error="buildError" @build="build" />
 
       <TodayInProgress
         v-else-if="view === 'progress'"
+        class="vf-reveal"
         :day-key="resumeInfo.dayKey"
         :done="resumeInfo.done"
         :total="resumeInfo.total"
@@ -288,6 +283,7 @@ async function rebuildProgram() {
 
       <TodayFinished
         v-else-if="view === 'done'"
+        class="vf-reveal"
         :day-key="doneInfo.dayKey"
         :exercises="doneInfo.exercises"
         :sets="doneInfo.sets"
@@ -297,6 +293,7 @@ async function rebuildProgram() {
 
       <TodayReady
         v-else-if="view === 'ready' && nextDay"
+        class="vf-reveal"
         :day-key="nextDay.key"
         :exercises="nextDay.exercises"
         :short-exercises="shortInfo.exercises"
@@ -356,31 +353,6 @@ async function rebuildProgram() {
   flex-direction: column;
   align-items: flex-end;
   gap: var(--vf-space-2);
-}
-
-.today__skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--vf-space-4);
-}
-
-.today__skeleton-block {
-  border-radius: var(--vf-radius);
-  background: var(--vf-color-chip-bg);
-}
-
-.today__skeleton-block--short {
-  width: 40%;
-  height: var(--vf-space-4);
-}
-
-.today__skeleton-block--wide {
-  width: 70%;
-  height: var(--vf-space-8);
-}
-
-.today__skeleton-block--button {
-  height: var(--vf-size-button-xl);
 }
 
 .today__message {
