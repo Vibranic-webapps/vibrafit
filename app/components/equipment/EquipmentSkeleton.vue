@@ -9,6 +9,14 @@ const { t } = useI18n()
 
 <template>
   <div class="eq-sk" role="status" :aria-label="t('equipment.loading')">
+    <!-- The loads summary that sits on top of the real screen. -->
+    <UiCard>
+      <div aria-hidden="true">
+        <div class="eq-sk__line eq-sk__line--label"><UiSkeleton width="45%" height="10px" :index="0" /></div>
+        <div class="eq-sk__line eq-sk__line--big"><UiSkeleton width="35%" height="20px" :index="1" /></div>
+        <div class="eq-sk__line eq-sk__line--big"><UiSkeleton width="50%" height="18px" :index="2" /></div>
+      </div>
+    </UiCard>
     <UiCard v-for="n in 3" :key="n">
       <div aria-hidden="true">
         <div class="eq-sk__line eq-sk__line--label"><UiSkeleton width="40%" height="10px" :index="n" /></div>
@@ -38,6 +46,10 @@ const { t } = useI18n()
 .eq-sk__line--label {
   height: calc(var(--vf-text-xs) * var(--vf-leading-normal));
   margin-bottom: var(--vf-space-1);
+}
+
+.eq-sk__line--big {
+  height: calc(var(--vf-text-xl) * var(--vf-leading-normal));
 }
 
 .eq-sk__line--hint {
