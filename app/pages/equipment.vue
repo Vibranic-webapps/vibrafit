@@ -187,6 +187,14 @@ async function load() {
 onMounted(load)
 onBeforeUnmount(() => clearTimeout(savedTimer))
 
+// Pull down to refresh. Never replaces what the user is editing: with unsaved changes
+// the form is left alone. A failure throws so the pull shows "couldn't refresh".
+onPullRefresh(async () => {
+  if (loadState.value === 'error') return load()
+  if (loadState.value !== 'ready' || dirty.value || saving.value) return
+  applyFromServer(await $fetch<EquipmentPayload>(EQUIPMENT_URL))
+})
+
 async function save() {
   if (saving.value) return
   saveError.value = ''
