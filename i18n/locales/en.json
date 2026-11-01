@@ -26,6 +26,13 @@
   },
   "ui": {
     "loading": "Loading",
+    "pull": {
+      "pull": "Pull to refresh",
+      "release": "Release to refresh",
+      "refreshing": "Refreshing…",
+      "updated": "Up to date",
+      "failed": "Couldn't refresh"
+    },
     "theme": {
       "label": "Appearance",
       "system": "System",

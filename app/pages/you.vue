@@ -20,6 +20,11 @@ const PASSWORD_URL: string = '/api/auth/password'
 const LOGOUT_URL: string = '/api/auth/logout'
 const ACCOUNT_URL: string = '/api/auth/account'
 
+// Pull down to refresh: re-read the account from the server.
+onPullRefresh(async () => {
+  user.value = await $fetch<AuthUser>(ME_URL)
+})
+
 // --- Name -------------------------------------------------------------
 const name = ref(user.value?.name ?? '')
 const nameError = ref('')

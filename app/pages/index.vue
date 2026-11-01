@@ -81,6 +81,14 @@ onMounted(() => {
   void load()
 })
 
+// Pull down to refresh: push any waiting sets first, then re-read the server's view.
+// Throwing when the answer came from the phone's memory shows "couldn't refresh".
+onPullRefresh(async () => {
+  await queue.flush().catch(() => null)
+  await load()
+  if (fromCache.value) throw new Error('offline')
+})
+
 // Back on the page after a sync (e.g. Resume -> finish -> back): pick up the server's view.
 watch(
   () => queue.hasPending.value,
