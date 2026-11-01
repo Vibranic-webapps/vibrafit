@@ -4,10 +4,17 @@
  * load that gear can build. Weights are typed in kg and converted to integer
  * grams right away (non-negotiable #2); the form keeps text so half-typed
  * numbers like "1." don't fight the user.
+ *
+ * Layout: the result first (a one-line summary of the loads you can build, tap
+ * to open the full list), then the gear, then a Save bar pinned above the tab
+ * bar that also shows how many loads the current form makes. "How many" is a
+ * stepper; plates are added with one tap from a short list of common weights.
  */
 import { Plus } from 'lucide-vue-next'
-import type { Equipment } from '~~/shared/utils/loads'
+import { buildableLoads, type Equipment } from '~~/shared/utils/loads'
 import { EQUIPMENT_LIMITS } from '~~/shared/utils/equipmentLimits'
+import { COMMON_PLATE_GRAMS } from '~~/shared/utils/equipmentPresets'
+import { summarizeLoads } from '~~/shared/utils/loadsSummary'
 
 definePageMeta({ layout: 'tabs' })
 
@@ -45,7 +52,6 @@ function fillForm(data: EquipmentPayload) {
   bandRows.value = data.bands.map((b) => ({ key: nextKey++, label: b.label, resistance: b.resistance ?? '', count: String(b.count) }))
 }
 
-function addPlate() { plateRows.value.push({ key: nextKey++, kg: '', count: '2' }) }
 function addFixed() { fixedRows.value.push({ key: nextKey++, label: '', kg: '', count: '1' }) }
 function addBand() { bandRows.value.push({ key: nextKey++, label: '', resistance: '', count: '1' }) }
 function removePlate(key: number) { plateRows.value = plateRows.value.filter((r) => r.key !== key) }
@@ -149,6 +155,83 @@ function err(field: string): string | null {
   return showErrors.value ? (parsed.value.errors[field] ?? null) : null
 }
 
+// --- Loads you can build (computed once; feeds the summary and the save bar) ---
+const loads = computed(() => {
+  try {
+    // A 0 kg "load" (empty unweighed handle) isn't something to train with, so leave it out.
+    const options = buildableLoads(parsed.value.equipment).filter((o) => o.grams > 0)
+    return { options, summary: summarizeLoads(options), failed: false }
+  } catch {
+    // buildableLoads throws RangeError on bad input; show a message instead of crashing the page.
+    return { options: [], summary: summarizeLoads([]), failed: true }
+  }
+})
+
+const handlesUnweighed = computed(() => parsed.value.equipment.handles.count > 0 && parsed.value.equipment.handles.grams === 0)
+
+// --- Plates: one-tap presets + steppers -----------------------------------------
+/** Plates in the form right now, counting what's typed even if another row is invalid. */
+const plateTotalNow = computed(() => plateRows.value.reduce((sum, r) => sum + (parseCount(r.count) ?? 0), 0))
+const plateTypesFull = computed(() => plateRows.value.length >= L.plateTypes)
+const platesFull = computed(() => plateTotalNow.value >= L.plateTotal)
+
+function plateRowFor(grams: number): PlateRow | undefined {
+  return plateRows.value.find((r) => kgToGrams(r.kg) === grams)
+}
+
+/** Whether one more plate of this weight fits within every limit. */
+function canAddPlate(grams: number): boolean {
+  if (platesFull.value) return false
+  const existing = plateRowFor(grams)
+  if (existing) return (parseCount(existing.count) ?? 0) < L.count
+  return !plateTypesFull.value
+}
+
+/** Adds one plate of this weight: bumps the row if there is one, else starts a row. */
+function addPlate(grams: number) {
+  if (!canAddPlate(grams)) return
+  const existing = plateRowFor(grams)
+  if (existing) existing.count = String((parseCount(existing.count) ?? 0) + 1)
+  else plateRows.value.push({ key: nextKey++, kg: gramsToKg(grams, 3), count: '1' })
+}
+
+/** How high this row's stepper may go: its own cap, and what's left of the total. */
+function plateMax(row: PlateRow): number {
+  const own = parseCount(row.count) ?? 1
+  return Math.max(own, Math.min(L.count, own + (L.plateTotal - plateTotalNow.value)))
+}
+
+const customOpen = ref(false)
+const customKg = ref('')
+const customError = ref('')
+
+function openCustom() {
+  customOpen.value = true
+  customError.value = ''
+}
+
+function addCustomPlate() {
+  const result = weight(customKg.value, L.plateGrams, false)
+  if ('error' in result) {
+    customError.value = result.error
+    return
+  }
+  if (!canAddPlate(result.grams)) {
+    customError.value = t('equipment.limitReached', { max: platesFull.value ? L.plateTotal : plateTypesFull.value ? L.plateTypes : L.count })
+    return
+  }
+  addPlate(result.grams)
+  customKg.value = ''
+  customError.value = ''
+  customOpen.value = false
+}
+
+function cancelCustom() {
+  customOpen.value = false
+  customKg.value = ''
+  customError.value = ''
+}
+
 // --- Load + save --------------------------------------------------------------
 type LoadState = 'loading' | 'ready' | 'error'
 const loadState = ref<LoadState>('loading')
@@ -229,6 +312,13 @@ async function save() {
 
 // The next edit clears the "saved" confirmation.
 watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
+
+const barStatus = computed(() => (dirty.value ? t('equipment.unsaved') : t('equipment.upToDate')))
+const barLoads = computed(() => {
+  if (loads.value.failed) return t('equipment.loads.errorShort')
+  if (!loads.value.summary.count) return t('equipment.loads.none')
+  return t('equipment.loads.headline', { n: loads.value.summary.count }, loads.value.summary.count)
+})
 </script>
 
 <template>
@@ -246,22 +336,31 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
       <UiButton variant="secondary" full-width @click="load">{{ t('equipment.retry') }}</UiButton>
     </UiCard>
 
-    <!-- Form + live panel -------------------------------------------------------->
+    <!-- Result first, then the gear, then the pinned save bar ------------------>
     <form v-else ref="formEl" class="eq__stack vf-reveal" novalidate @submit.prevent="save">
+      <EquipmentLoadsPanel
+        :options="loads.options"
+        :summary="loads.summary"
+        :failed="loads.failed"
+        :handles-unweighed="handlesUnweighed"
+        :has-skipped-rows="parsed.hasSkippedRows"
+      />
+
       <!-- Handles -->
       <UiCard>
         <h2 class="vf-label eq__section-label">{{ t('equipment.handles.title') }}</h2>
         <p class="vf-muted eq__section-hint">{{ t('equipment.handles.hint') }}</p>
-        <div class="eq__grid">
-          <EquipmentNumberInput v-model="handleCount" mode="count" :label="t('equipment.handles.count')" :error="err('handleCount')" />
-          <EquipmentNumberInput
-            v-model="handleKg"
-            mode="kg"
-            :unit="t('equipment.kg')"
-            :label="t('equipment.handles.weight')"
-            :error="err('handleKg')"
-          />
+        <div class="eq__count-line">
+          <span class="vf-label">{{ t('equipment.handles.count') }}</span>
+          <EquipmentCountStepper v-model="handleCount" :min="0" :max="L.handleCount" :what="t('equipment.handles.what')" />
         </div>
+        <EquipmentNumberInput
+          v-model="handleKg"
+          mode="kg"
+          :unit="t('equipment.kg')"
+          :label="t('equipment.handles.weight')"
+          :error="err('handleKg')"
+        />
         <p class="vf-muted eq__section-hint eq__after">{{ t('equipment.handles.weightHint') }}</p>
       </UiCard>
 
@@ -269,29 +368,71 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
       <UiCard>
         <h2 class="vf-label eq__section-label">{{ t('equipment.plates.title') }}</h2>
         <p class="vf-muted eq__section-hint">{{ t('equipment.plates.hint') }}</p>
+
         <p v-if="!plateRows.length" class="vf-muted eq__empty">{{ t('equipment.plates.empty') }}</p>
-        <ul class="eq__rows">
-          <li v-for="(row, i) in plateRows" :key="row.key" class="eq__row">
-            <EquipmentNumberInput
-              v-model="row.kg"
-              mode="kg"
-              :unit="t('equipment.kg')"
-              :label="t('equipment.plates.weight')"
-              :error="err(`p${row.key}kg`)"
+        <ul v-else class="eq__plates">
+          <li v-for="row in plateRows" :key="row.key" class="eq__plate">
+            <span class="eq__plate-weight vf-num">{{ t('equipment.loads.kg', { kg: row.kg }) }}</span>
+            <EquipmentCountStepper
+              v-model="row.count"
+              :min="1"
+              :max="plateMax(row)"
+              :what="t('equipment.plates.rowWeight', { kg: row.kg })"
             />
-            <EquipmentNumberInput v-model="row.count" mode="count" :label="t('equipment.plates.count')" :error="err(`p${row.key}count`)" />
             <EquipmentRemoveButton
-              :label="t('equipment.remove', { what: t('equipment.plates.row', { n: i + 1 }) })"
+              :label="t('equipment.remove', { what: t('equipment.plates.rowWeight', { kg: row.kg }) })"
               @click="removePlate(row.key)"
             />
+            <p v-if="err(`p${row.key}kg`) || err(`p${row.key}count`)" class="eq__row-error" role="alert">
+              {{ err(`p${row.key}kg`) || err(`p${row.key}count`) }}
+            </p>
           </li>
         </ul>
-        <UiButton variant="secondary" full-width :disabled="plateRows.length >= L.plateTypes" @click="addPlate">
-          <span class="eq__add"><Plus :size="20" aria-hidden="true" />{{ t('equipment.plates.add') }}</span>
-        </UiButton>
-        <p v-if="plateRows.length >= L.plateTypes" class="vf-muted eq__section-hint eq__after">{{ t('equipment.limitReached', { max: L.plateTypes }) }}</p>
+
+        <!-- One tap adds a plate of that weight (or one more of it). -->
+        <p id="eq-quick-label" class="vf-label eq__quick-label">{{ t('equipment.plates.quickAdd') }}</p>
+        <div class="eq__chips" role="group" aria-labelledby="eq-quick-label">
+          <button
+            v-for="grams in COMMON_PLATE_GRAMS"
+            :key="grams"
+            type="button"
+            class="eq__chip vf-num"
+            :disabled="!canAddPlate(grams)"
+            :aria-label="t('equipment.plates.addPreset', { kg: gramsToKg(grams) })"
+            @click="addPlate(grams)"
+          >
+            {{ t('equipment.loads.kg', { kg: gramsToKg(grams) }) }}
+          </button>
+          <button
+            v-if="!customOpen"
+            type="button"
+            class="eq__chip eq__chip--other"
+            :disabled="platesFull || plateTypesFull"
+            @click="openCustom"
+          >
+            {{ t('equipment.plates.other') }}
+          </button>
+        </div>
+
+        <!-- Any other weight: typed once, then it's a row like the rest. -->
+        <div v-if="customOpen" class="eq__custom" @keydown.enter.prevent="addCustomPlate">
+          <EquipmentNumberInput
+            v-model="customKg"
+            mode="kg"
+            :unit="t('equipment.kg')"
+            :label="t('equipment.plates.weight')"
+            :error="customError"
+          />
+          <div class="eq__custom-actions">
+            <UiButton variant="secondary" @click="cancelCustom">{{ t('equipment.cancel') }}</UiButton>
+            <UiButton @click="addCustomPlate">{{ t('equipment.add') }}</UiButton>
+          </div>
+        </div>
+
+        <p v-if="plateTypesFull" class="vf-muted eq__section-hint eq__after">{{ t('equipment.limitReached', { max: L.plateTypes }) }}</p>
         <!-- Shown right away, not only after Save: it also explains why the loads panel left plates out. -->
         <p v-if="parsed.plateTotalError" class="eq__section-hint eq__after eq__plate-total" role="alert">{{ parsed.plateTotalError }}</p>
+        <p v-else-if="platesFull" class="vf-muted eq__section-hint eq__after">{{ t('equipment.plates.totalFull', { max: L.plateTotal }) }}</p>
       </UiCard>
 
       <!-- Fixed weights -->
@@ -300,26 +441,34 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
         <p class="vf-muted eq__section-hint">{{ t('equipment.fixed.hint') }}</p>
         <p v-if="!fixedRows.length" class="vf-muted eq__empty">{{ t('equipment.fixed.empty') }}</p>
         <ul class="eq__rows">
-          <li v-for="(row, i) in fixedRows" :key="row.key" class="eq__row eq__row--wide">
+          <li v-for="(row, i) in fixedRows" :key="row.key" class="eq__row">
             <UiField
               v-model="row.label"
-              class="eq__span"
               :label="t('equipment.fixed.label')"
               :maxlength="L.label"
               :error="err(`f${row.key}label`)"
             />
+            <EquipmentRemoveButton
+              :label="t('equipment.remove', { what: row.label.trim() || t('equipment.fixed.row', { n: i + 1 }) })"
+              @click="removeFixed(row.key)"
+            />
             <EquipmentNumberInput
               v-model="row.kg"
+              class="eq__span"
               mode="kg"
               :unit="t('equipment.kg')"
               :label="t('equipment.fixed.weight')"
               :error="err(`f${row.key}kg`)"
             />
-            <EquipmentNumberInput v-model="row.count" mode="count" :label="t('equipment.fixed.count')" :error="err(`f${row.key}count`)" />
-            <EquipmentRemoveButton
-              :label="t('equipment.remove', { what: row.label.trim() || t('equipment.fixed.row', { n: i + 1 }) })"
-              @click="removeFixed(row.key)"
-            />
+            <div class="eq__count-line eq__span">
+              <span class="vf-label">{{ t('equipment.fixed.count') }}</span>
+              <EquipmentCountStepper
+                v-model="row.count"
+                :min="1"
+                :max="L.count"
+                :what="row.label.trim() || t('equipment.fixed.row', { n: i + 1 })"
+              />
+            </div>
           </li>
         </ul>
         <UiButton variant="secondary" full-width :disabled="fixedRows.length >= L.fixedTypes" @click="addFixed">
@@ -334,13 +483,16 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
         <p class="vf-muted eq__section-hint">{{ t('equipment.bands.hint') }}</p>
         <p v-if="!bandRows.length" class="vf-muted eq__empty">{{ t('equipment.bands.empty') }}</p>
         <ul class="eq__rows">
-          <li v-for="(row, i) in bandRows" :key="row.key" class="eq__row eq__row--wide">
+          <li v-for="(row, i) in bandRows" :key="row.key" class="eq__row">
             <UiField
               v-model="row.label"
-              class="eq__span"
               :label="t('equipment.bands.label')"
               :maxlength="L.label"
               :error="err(`b${row.key}label`)"
+            />
+            <EquipmentRemoveButton
+              :label="t('equipment.remove', { what: row.label.trim() || t('equipment.bands.row', { n: i + 1 }) })"
+              @click="removeBand(row.key)"
             />
             <UiField
               v-model="row.resistance"
@@ -350,12 +502,15 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
               :maxlength="L.label"
               :error="err(`b${row.key}resistance`)"
             />
-            <EquipmentNumberInput v-model="row.count" mode="count" :label="t('equipment.bands.count')" :error="err(`b${row.key}count`)" />
-            <EquipmentRemoveButton
-              class="eq__row-end"
-              :label="t('equipment.remove', { what: row.label.trim() || t('equipment.bands.row', { n: i + 1 }) })"
-              @click="removeBand(row.key)"
-            />
+            <div class="eq__count-line eq__span">
+              <span class="vf-label">{{ t('equipment.bands.count') }}</span>
+              <EquipmentCountStepper
+                v-model="row.count"
+                :min="1"
+                :max="L.count"
+                :what="row.label.trim() || t('equipment.bands.row', { n: i + 1 })"
+              />
+            </div>
           </li>
         </ul>
         <UiButton variant="secondary" full-width :disabled="bandRows.length >= L.bandTypes" @click="addBand">
@@ -364,16 +519,19 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
         <p v-if="bandRows.length >= L.bandTypes" class="vf-muted eq__section-hint eq__after">{{ t('equipment.limitReached', { max: L.bandTypes }) }}</p>
       </UiCard>
 
-      <!-- Live result -->
-      <EquipmentLoadsPanel :equipment="parsed.equipment" :has-skipped-rows="parsed.hasSkippedRows" />
-
-      <!-- Save -->
-      <div class="eq__save">
+      <!-- Save bar: pinned above the tab bar so Save is always in reach, and it keeps the
+           live count in view while you edit. -->
+      <div class="eq__bar">
         <p v-if="saveError" ref="errorEl" class="eq__alert eq__alert--error" role="alert" tabindex="-1">{{ saveError }}</p>
         <p v-else-if="showErrors && !parsed.payload" class="eq__alert eq__alert--error" role="alert">{{ t('equipment.fixErrors') }}</p>
         <p v-else-if="justSaved" class="eq__alert eq__alert--notice" role="status">{{ t('equipment.saved') }}</p>
-        <p v-else class="vf-muted eq__status" role="status">{{ dirty ? t('equipment.unsaved') : t('equipment.upToDate') }}</p>
-        <UiButton type="submit" full-width :loading="saving" :disabled="!dirty">{{ t('equipment.save') }}</UiButton>
+        <div class="eq__bar-row">
+          <p class="eq__status" role="status">
+            <span class="eq__status-main">{{ barStatus }}</span>
+            <span class="eq__status-loads vf-muted">{{ barLoads }}</span>
+          </p>
+          <UiButton type="submit" :loading="saving" :disabled="!dirty">{{ t('equipment.save') }}</UiButton>
+        </div>
       </div>
     </form>
   </main>
@@ -386,7 +544,8 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
   gap: var(--vf-space-2);
   max-width: var(--vf-width-page);
   margin: 0 auto;
-  padding: var(--vf-space-6) var(--vf-space-4) var(--vf-space-16);
+  /* No bottom padding: the pinned save bar is the last thing and sits flush on the tab bar. */
+  padding: var(--vf-space-6) var(--vf-space-4) 0;
 }
 
 .eq__back {
@@ -440,13 +599,98 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
   gap: var(--vf-space-2);
 }
 
-.eq__grid {
-  align-items: end;
+/* "How many": the label on the left, the stepper on the right. */
+.eq__count-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vf-space-3);
+  margin-bottom: var(--vf-space-3);
+}
+
+/* Plates: weight, stepper, remove. One compact line each. */
+.eq__plates {
+  list-style: none;
+  margin: 0 0 var(--vf-space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.eq__plate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vf-space-2);
+  padding: var(--vf-space-2) 0;
+  border-top: var(--vf-border-thin) solid var(--vf-color-border);
+}
+
+.eq__plate:last-child {
+  border-bottom: var(--vf-border-thin) solid var(--vf-color-border);
+}
+
+.eq__plate-weight {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--vf-text-xl);
+}
+
+.eq__row-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--vf-color-hard);
+  font-size: var(--vf-text-sm);
+  font-weight: var(--vf-weight-semibold);
+}
+
+.eq__quick-label {
+  margin: 0 0 var(--vf-space-2);
+}
+
+.eq__chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--vf-space-2);
+}
+
+.eq__chip {
+  min-height: var(--vf-tap-min);
+  padding: 0 var(--vf-space-1);
+  border: var(--vf-border) solid var(--vf-color-control-border);
+  border-radius: var(--vf-radius);
+  background: var(--vf-color-surface);
+  color: var(--vf-color-text);
+  font-size: var(--vf-text-base);
+  cursor: pointer;
+  transition: opacity var(--vf-duration-base) var(--vf-ease), border-color var(--vf-duration-base) var(--vf-ease);
+}
+
+.eq__chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.eq__chip--other {
+  font-family: var(--vf-font-body);
+  font-weight: var(--vf-weight-semibold);
+  color: var(--vf-color-accent-text);
+}
+
+.eq__custom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vf-space-3);
+  margin-top: var(--vf-space-4);
+}
+
+.eq__custom-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--vf-space-3);
 }
 
+/* Fixed weights and bands: name + remove on top, the rest below. */
 .eq__rows {
   list-style: none;
   margin: 0;
@@ -460,29 +704,26 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
   margin-bottom: var(--vf-space-4);
 }
 
-/* Each row: inputs side by side, remove button at the end, aligned to the inputs. */
 .eq__row {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: start;
   gap: var(--vf-space-3);
   padding-bottom: var(--vf-space-4);
   border-bottom: var(--vf-border-thin) solid var(--vf-color-border);
 }
 
-/* Remove button sits level with the input boxes, below the small label. */
+/* Remove button sits level with the input box, below the small label. */
 .eq__row :deep(.eq-remove) {
   margin-top: calc(var(--vf-text-xs) * var(--vf-leading-normal) + var(--vf-space-2));
 }
 
-/* Rows with a text field on top: it spans the full width. */
 .eq__span {
   grid-column: 1 / -1;
 }
 
-/* Bands: count + remove share the second line. */
-.eq__row-end {
-  grid-column: 3;
+.eq__row .eq__count-line {
+  margin-bottom: 0;
 }
 
 .eq__alert {
@@ -504,15 +745,40 @@ watch(dirty, (isDirty) => { if (isDirty) justSaved.value = false })
   color: var(--vf-color-text);
 }
 
-.eq__save {
+/* Pinned just above the tab bar (--vf-tabbar-h is published by the tabs layout). */
+.eq__bar {
+  position: sticky;
+  bottom: var(--vf-tabbar-h, 0px);
+  z-index: var(--vf-z-tabbar);
   display: flex;
   flex-direction: column;
+  gap: var(--vf-space-2);
+  margin: 0 calc(-1 * var(--vf-space-4));
+  padding: var(--vf-space-3) var(--vf-space-4);
+  border-top: var(--vf-border-thin) solid var(--vf-color-border);
+  background: var(--vf-color-surface);
+}
+
+.eq__bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--vf-space-3);
 }
 
 .eq__status {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   margin: 0;
+}
+
+.eq__status-main {
+  font-weight: var(--vf-weight-semibold);
   font-size: var(--vf-text-sm);
-  text-align: center;
+}
+
+.eq__status-loads {
+  font-size: var(--vf-text-sm);
 }
 </style>

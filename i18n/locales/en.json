@@ -341,6 +341,11 @@
     "kg": "kg",
     "remove": "Remove {what}",
     "add": "Add",
+    "cancel": "Cancel",
+    "stepper": {
+      "decrease": "Decrease {what}",
+      "increase": "Increase {what}"
+    },
     "limitReached": "You've reached the limit of {max}.",
     "unsaved": "Unsaved changes",
     "upToDate": "All changes saved",
@@ -368,12 +373,18 @@
       "title": "Dumbbell handles",
       "hint": "Adjustable dumbbells: the bars you slide plates onto.",
       "count": "How many handles",
+      "what": "handles",
       "weight": "Empty handle weight",
       "weightHint": "0 means not weighed yet. Loads then leave out the handle weight."
     },
     "plates": {
       "title": "Plates",
-      "hint": "Loose plates for your handles. Add one row per plate weight.",
+      "hint": "Loose plates for your handles. Tap a weight to add a plate, then adjust how many.",
+      "quickAdd": "Add a plate",
+      "addPreset": "Add a {kg} kg plate",
+      "other": "Other",
+      "rowWeight": "{kg} kg plates",
+      "totalFull": "That's the most plates Vibrafit can combine ({max}).",
       "weight": "Plate weight",
       "count": "How many",
       "row": "plate row {n}",
@@ -403,6 +414,11 @@
     },
     "loads": {
       "title": "Loads you can build",
+      "headline": "{n} load | {n} loads",
+      "range": "{min} to {max} kg",
+      "none": "No loads yet",
+      "errorShort": "Can't work out loads",
+      "toggle": "Tap to see how to build each one",
       "empty": "Add handles and plates, or a fixed weight, to see what you can build.",
       "pairs": "Pairs",
       "pairsHint": "Two dumbbells at the same weight. The weight is per hand.",
