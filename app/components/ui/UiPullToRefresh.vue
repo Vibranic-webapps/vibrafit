@@ -20,7 +20,7 @@ const { t } = useI18n()
 
 // --- Feel (px / ms). Distances are the page's travel, not the finger's. ----------------
 const SEGMENTS = 12
-const RESISTANCE = 0.55 // the page moves 55% of the finger's distance until the threshold
+const RESISTANCE = 0.7 // the page moves 70% of the finger's distance until the threshold
 const THRESHOLD = 64 // travel at which letting go refreshes
 const OVERSHOOT_DAMPING = 0.3 // past the threshold it gets heavier
 const MAX_TRAVEL = 96
@@ -192,6 +192,7 @@ onBeforeUnmount(() => {
   <div ref="root" class="vf-ptr">
     <div class="vf-ptr__gap" aria-hidden="true" :style="{ height: `${travel}px` }" :data-phase="phase">
       <div class="vf-ptr__inner">
+        <span class="vf-ptr__caption">{{ caption }}</span>
         <div class="vf-ptr__segments" :class="{ 'vf-ptr__segments--sweep': phase === 'refreshing' }">
           <span
             v-for="n in SEGMENTS"
@@ -201,7 +202,6 @@ onBeforeUnmount(() => {
             :style="{ '--i': n }"
           />
         </div>
-        <span class="vf-ptr__caption">{{ caption }}</span>
       </div>
     </div>
     <p class="vf-visually-hidden" role="status" aria-live="polite">{{ announcement }}</p>
@@ -250,7 +250,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   gap: var(--vf-space-2);
-  padding-bottom: var(--vf-space-3);
+  /* Anchored to the bottom of the gap, segments lowest: they are the first thing the pull
+     uncovers (the caption is secondary and arrives with the rest of the room). */
+  padding-bottom: var(--vf-space-2);
 }
 
 .vf-ptr__segments {
